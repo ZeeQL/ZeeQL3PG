@@ -8,8 +8,9 @@ let package = Package(
   ],
   
   dependencies: [
-    .Package(url: "git@github.com:helje5/CLibPQ.git", majorVersion: 0),
-    .Package(url: "git@github.com:helje5/ZeeQL3.git", majorVersion: 0)
+    .Package(url: "https://github.com/ZeeQL/CLibPQ.git",
+             majorVersion: 1, minor: 0),
+    .Package(url: "https://github.com/ZeeQL/ZeeQL3.git", majorVersion: 0)
   ],
 	
   exclude: [
