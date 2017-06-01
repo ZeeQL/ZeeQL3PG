@@ -202,7 +202,8 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
             if logSQL { print("      [\(idx)]> bind string \"\(value)\"") }
             type     = OIDs.VARCHAR
             rawValue = UnsafePointer(strdup(value))
-            length   = Int32(strlen(rawValue)) // TODO: include 0 in length?
+            length   = rawValue != nil ? Int32(strlen(rawValue!)) : 0
+              // TODO: include 0 in length?
           }
           else if let value = value as? SingleIntKeyGlobalID { // hacky
             if logSQL { print("      [\(idx)]> bind key \(value)") }
@@ -222,7 +223,8 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
             if logSQL { print("      [\(idx)]> bind other \(value)") }
             type = OIDs.VARCHAR
             rawValue = UnsafePointer(strdup("\(value)"))
-            length   = Int32(strlen(rawValue)) // TODO: include 0 in length?
+            length   = rawValue != nil ? Int32(strlen(rawValue)) : 0
+              // TODO: include 0 in length?
           }
         }
         else {
@@ -352,23 +354,38 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
     // TODO: decode actual types :-)
     
     switch type {
-      case OIDs.INT2:    return Int16(atol(value.baseAddress))
-      case OIDs.INT4:    return Int32(atol(value.baseAddress))
-      case OIDs.FLOAT4:  return Float32(atof(value.baseAddress))
-      case OIDs.FLOAT8:  return Float64(atof(value.baseAddress))
+      case OIDs.INT2:
+        guard let base = value.baseAddress else { return Int16(0) }
+        return Int16(atol(base))
       
-      case OIDs.VARCHAR: return String(cString: value.baseAddress!)
+      case OIDs.INT4:
+        guard let base = value.baseAddress else { return Int32(0) }
+        return Int32(atol(base))
+      
+      case OIDs.FLOAT4:
+        guard let base = value.baseAddress else { return Float32(0) }
+        return Float32(atof(base))
+      
+      case OIDs.FLOAT8:
+        guard let base = value.baseAddress else { return Float64(0) }
+        return Float64(atof(base))
+      
+      case OIDs.VARCHAR:
+        guard let base = value.baseAddress else { return Optional<String>.none }
+        return String(cString: base)
       
       case OIDs.TIMESTAMPTZ:
         // TODO: I think it is better to fix this during the query, that is,
         // to a SELECT unix_time(startDate) like thing.
         // hm. How to parse this? We used to have the format in the attribute?
         // http://www.linuxtopia.org/online_books/database_guides/Practical_PostgreSQL_database/PostgreSQL_x2632_005.htm
-        return String(cString: value.baseAddress!)
+        guard let base = value.baseAddress else { return Optional<String>.none }
+        return String(cString: base)
       
       default:
         print("OID: \(type): \(String(cString:value.baseAddress!))")
-        return String(cString: value.baseAddress!)
+        guard let base = value.baseAddress else { return Optional<String>.none }
+        return String(cString: base)
     }
   }
  
