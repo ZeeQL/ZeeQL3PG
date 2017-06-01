@@ -223,7 +223,7 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
             if logSQL { print("      [\(idx)]> bind other \(value)") }
             type = OIDs.VARCHAR
             rawValue = UnsafePointer(strdup("\(value)"))
-            length   = rawValue != nil ? Int32(strlen(rawValue)) : 0
+            length   = rawValue != nil ? Int32(strlen(rawValue!)) : 0
               // TODO: include 0 in length?
           }
         }
