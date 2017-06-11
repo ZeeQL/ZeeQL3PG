@@ -246,7 +246,7 @@
 					};
 					E8EB94CC1E5F32360058D8D1 = {
 						CreatedOnToolsVersion = 8.2.1;
-						LastSwiftMigration = 0820;
+						LastSwiftMigration = 0900;
 						ProvisioningStyle = Automatic;
 					};
 				};
