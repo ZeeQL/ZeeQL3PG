@@ -3,6 +3,11 @@
        align="right" width="128" height="128" />
 </h2>
 
+![Swift3](https://img.shields.io/badge/swift-3-blue.svg)
+![macOS](https://img.shields.io/badge/os-macOS-green.svg?style=flat)
+![tuxOS](https://img.shields.io/badge/os-tuxOS-green.svg?style=flat)
+![Travis](https://travis-ci.org/ZeeQL/ZeeQL3PG.svg?branch=develop)
+
 This library contains a ZeeQL database adaptor for
 [PostgreSQL](https://www.postgresql.org).
 
@@ -26,6 +31,11 @@ To operate, ZeeQL3PG currently requires libpq. You can get it on macOS via
 and on Ubuntu using
 
     apt-get install libpq-dev
+
+### Documentation
+
+ZeeQL documentation can be found at:
+[docs.zeeql.io](http://docs.zeeql.io/).
 
 ### Who
 
