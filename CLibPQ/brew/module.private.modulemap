@@ -4,7 +4,8 @@
 //
 
 module CLibPQ [system] {
-  header "/usr/local/opt/postgresql/include/libpq-fe.h"
+  //header "/usr/local/opt/postgresql/include/libpq-fe.h"
+  header "/usr/local/opt/libpq/include/libpq-fe.h"
   export *
   link "pq"
 }
