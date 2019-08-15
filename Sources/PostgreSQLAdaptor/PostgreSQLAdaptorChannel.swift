@@ -322,7 +322,8 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
       
       case OIDs.BOOL:    return (value.baseAddress!.pointee != 0)
       
-      case OIDs.VARCHAR, OIDs.TEXT: return String(cString: value.baseAddress!)
+      case OIDs.VARCHAR, OIDs.TEXT, OIDs.CHAR:
+        return String(cString: value.baseAddress!)
       
       case OIDs.NAME: // e.g. SELECT datname FROM pg_database
         return String(cString: value.baseAddress!)
@@ -339,7 +340,7 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
         return UInt32(bigEndian: cast(value.baseAddress!))
       
       default:
-        print("OID: \(type): \(String(cString:value.baseAddress!))")
+        print("Unexpected OID: \(type): \(String(cString:value.baseAddress!))")
         return Data(buffer: value)
     }
   }
