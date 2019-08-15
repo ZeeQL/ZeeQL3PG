@@ -370,7 +370,7 @@ open class PostgreSQLModelFetch: AdaptorModelFetch {
         attribute.allowsNull = nulls == "f"
       }
       else if let null = colinfo["attnotnull"] as? Bool {
-        attribute.allowsNull = null
+        attribute.allowsNull = !null
       }
       
       if let exttype = exttype {
