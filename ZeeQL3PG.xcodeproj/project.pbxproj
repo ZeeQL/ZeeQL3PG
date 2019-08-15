@@ -20,6 +20,7 @@
 		E8A835071ECDCF6300CCDD82 /* AdaptorActiveRecordTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A835061ECDCF6300CCDD82 /* AdaptorActiveRecordTestCase.swift */; };
 		E8A8350A1ECDCF6D00CCDD82 /* ContactsDBModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A835081ECDCF6D00CCDD82 /* ContactsDBModel.swift */; };
 		E8A8350B1ECDCF6D00CCDD82 /* PostgreSQLActiveRecordTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A835091ECDCF6D00CCDD82 /* PostgreSQLActiveRecordTests.swift */; };
+		E8BD32742305B2B3000EA627 /* PGTestRentalsDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8BD32732305B2B3000EA627 /* PGTestRentalsDB.swift */; };
 		E8D95FC91E91A7AD0072FF09 /* libZeeQL.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E8D95FC81E91A7AD0072FF09 /* libZeeQL.dylib */; };
 		E8DDEE2C1E5FA12C00EC1DD8 /* libPostgreSQLAdaptor.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E8EB94CD1E5F32360058D8D1 /* libPostgreSQLAdaptor.dylib */; };
 /* End PBXBuildFile section */
@@ -53,6 +54,7 @@
 		E8A835061ECDCF6300CCDD82 /* AdaptorActiveRecordTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AdaptorActiveRecordTestCase.swift; sourceTree = "<group>"; };
 		E8A835081ECDCF6D00CCDD82 /* ContactsDBModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactsDBModel.swift; sourceTree = "<group>"; };
 		E8A835091ECDCF6D00CCDD82 /* PostgreSQLActiveRecordTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PostgreSQLActiveRecordTests.swift; sourceTree = "<group>"; };
+		E8BD32732305B2B3000EA627 /* PGTestRentalsDB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PGTestRentalsDB.swift; sourceTree = "<group>"; };
 		E8CF06451E645B68008E5847 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		E8D279721E5505DE00453BBE /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Base.xcconfig; path = xcconfig/Base.xcconfig; sourceTree = "<group>"; };
 		E8D95FC81E91A7AD0072FF09 /* libZeeQL.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libZeeQL.dylib; path = ../ZeeQL/build/Debug/libZeeQL.dylib; sourceTree = "<group>"; };
@@ -97,6 +99,7 @@
 			isa = PBXGroup;
 			children = (
 				E870FC3E1E9BA1F700A038AF /* Info.plist */,
+				E8BD32732305B2B3000EA627 /* PGTestRentalsDB.swift */,
 				E8A835051ECDCF3700CCDD82 /* Generic */,
 				E870FC3F1E9BA1F700A038AF /* PostgreSQLAdaptorOGoTests.swift */,
 				E870FC401E9BA1F700A038AF /* PostgreSQLSQLExpressionTests.swift */,
@@ -291,6 +294,7 @@
 				E8A8350A1ECDCF6D00CCDD82 /* ContactsDBModel.swift in Sources */,
 				E8A835071ECDCF6300CCDD82 /* AdaptorActiveRecordTestCase.swift in Sources */,
 				E870FC411E9BA1F700A038AF /* AdaptorOGoTestCase.swift in Sources */,
+				E8BD32742305B2B3000EA627 /* PGTestRentalsDB.swift in Sources */,
 				E870FC431E9BA1F700A038AF /* PostgreSQLAdaptorOGoTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
