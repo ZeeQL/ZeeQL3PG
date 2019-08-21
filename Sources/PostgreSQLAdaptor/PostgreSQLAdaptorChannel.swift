@@ -334,11 +334,14 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
         // hm. How to parse this? We used to have the format in the attribute?
         // http://www.linuxtopia.org/online_books/database_guides/Practical_PostgreSQL_database/PostgreSQL_x2632_005.htm
         return String(cString: value.baseAddress!)
-      
+      case OIDs.TIMESTAMP:
+        return String(cString: value.baseAddress!)
+
       case OIDs.OID:
         // https://www.postgresql.org/docs/9.5/static/datatype-oid.html
         return UInt32(bigEndian: cast(value.baseAddress!))
       
+
       default:
         print("Unexpected OID: \(type): \(String(cString:value.baseAddress!))")
         return Data(buffer: value)
