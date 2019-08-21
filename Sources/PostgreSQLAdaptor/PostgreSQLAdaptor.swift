@@ -3,9 +3,10 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
 //
 
+import Foundation
 import ZeeQL
 import CLibPQ
 
@@ -73,6 +74,48 @@ open class PostgreSQLAdaptor : Adaptor, SmartDescription {
     self.init(s)
   }
   
+  private func parseConnectionString(_ s: String) -> [ String : String ] {
+    guard !s.isEmpty else { return [:] }
+    let pairs : [ ( Substring, Substring ) ]
+        = connectString.split(maxSplits: 32, omittingEmptySubsequences: true) {
+          guard $0.unicodeScalars.count == 1 else { return false }
+          return CharacterSet.whitespacesAndNewlines
+                   .contains($0.unicodeScalars.first!)
+        }
+        .compactMap {
+          let pair = $0.split(separator: "=", maxSplits: 1)
+          guard pair.count == 2 else { return nil }
+          return ( pair[0], pair[1] )
+        }
+    guard !pairs.isEmpty else { return [:] }
+    var values = [ String : String ]()
+    values.reserveCapacity(pairs.count)
+    for ( key, value ) in pairs {
+      values[String(key).lowercased()] = String(value)
+    }
+    return values
+  }
+  
+  public var url: URL? {
+    if connectString.hasPrefix("postgresql") && connectString.contains("://") {
+      return URL(string: connectString)
+    }
+    
+    let cfg = parseConnectionString(connectString)
+    var url    = URLComponents()
+    url.scheme = "postgresql"
+    url.port   = cfg["port"].flatMap(Int.init)
+    
+    if let v = cfg["host"],     !v.isEmpty { url.host     = v }
+    if let v = cfg["user"],     !v.isEmpty { url.user     = v }
+    if let v = cfg["password"], !v.isEmpty { url.password = v }
+    if let v = cfg["dbname"], !v.isEmpty {
+      url.path = "/"
+        + v.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)!
+    }
+    return url.url
+  }
+
   
   // MARK: - Support
   
