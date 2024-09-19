@@ -39,6 +39,8 @@ jobs:
         run:  brew update
       - name: Install PQ
         run:  brew install libpq
+      - name: Link PQ
+        run:  brew link --force libpq
       - name: Checkout Repository
         uses: actions/checkout@v4
       - name: Build Swift Debug Package
