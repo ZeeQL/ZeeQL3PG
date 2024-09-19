@@ -6,6 +6,13 @@
 //  Copyright © 2017 ZeeZide GmbH. All rights reserved.
 //
 
+#if os(Windows)
+  import WinSDK
+#elseif os(Linux)
+  import Glibc
+#else
+  import Darwin
+#endif
 import struct Foundation.Data
 import ZeeQL
 import CLibPQ

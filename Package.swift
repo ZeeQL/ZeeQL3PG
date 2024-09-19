@@ -9,8 +9,8 @@ let package = Package(
     .library(name: "PostgreSQLAdaptor", targets: [ "PostgreSQLAdaptor" ])
   ],
   dependencies: [
-    .package(url: "https://github.com/ZeeQL/CLibPQ.git", from: "2.0.1"),
-    .package(url: "https://github.com/ZeeQL/ZeeQL3.git", from: "0.8.0")
+    .package(url: "https://github.com/ZeeQL/CLibPQ.git", from: "2.0.4"),
+    .package(url: "https://github.com/ZeeQL/ZeeQL3.git", from: "0.9.6")
   ],
   targets: [
     .target(name: "PostgreSQLAdaptor", dependencies: [ "CLibPQ", "ZeeQL" ])
