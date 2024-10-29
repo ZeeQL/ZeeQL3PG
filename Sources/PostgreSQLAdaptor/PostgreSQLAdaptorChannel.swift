@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 #if os(Windows)
@@ -14,6 +14,7 @@
   import Darwin
 #endif
 import struct Foundation.Data
+import class  Foundation.UserDefaults
 import ZeeQL
 import CLibPQ
 
@@ -34,11 +35,12 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
 
   public let expressionFactory : SQLExpressionFactory
   public var handle : OpaquePointer?
-  final  let logSQL  = true
+  final  let logSQL : Bool
   
   init(adaptor: Adaptor, handle: OpaquePointer) {
     self.expressionFactory = adaptor.expressionFactory
     self.handle = handle
+    self.logSQL = UserDefaults.standard.bool(forKey: "PGDebugEnabled")
   }
   
   deinit {
