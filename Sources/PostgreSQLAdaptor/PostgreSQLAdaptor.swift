@@ -203,8 +203,9 @@ open class PostgreSQLAdaptor : Adaptor, SmartDescription {
 
   public func appendToDescription(_ ms: inout String) {
     ms += " " + connectString
-    if model != nil {
+    if let model = model {
       ms += " has-model"
+      if model.isPattern { ms += "(pattern)" }
     }
   }
 }
