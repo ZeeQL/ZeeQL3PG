@@ -13,8 +13,7 @@
 #else
   import Darwin
 #endif
-import struct Foundation.Data
-import class  Foundation.UserDefaults
+import Foundation
 import ZeeQL
 import CLibPQ
 
@@ -319,6 +318,7 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
     // TODO: consider attribute! (e.g. for date, valueType in attr, if set)
     
     // TODO: decode actual types :-)
+    // TODO: do not crash on force unwrap
     
     switch type {
       case OIDs.INT2:    return Int16(bigEndian: cast(value.baseAddress!))
@@ -337,11 +337,25 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
       case OIDs.NAME: // e.g. SELECT datname FROM pg_database
         return String(cString: value.baseAddress!)
       
-      case OIDs.TIMESTAMPTZ:
+      case OIDs.TIMESTAMPTZ: // 1184
         // TODO: I think it is better to fix this during the query, that is,
         // to a SELECT unix_time(startDate) like thing.
         // hm. How to parse this? We used to have the format in the attribute?
         // http://www.linuxtopia.org/online_books/database_guides/Practical_PostgreSQL_database/PostgreSQL_x2632_005.htm
+        // 2024-11-08(hh): this seems to be 8 bytes aka UInt64 and the above
+        //                 for String representations
+        // https://postgrespro.com/list/thread-id/1482672
+        // https://materialize.com/docs/sql/types/timestamp/
+        // - Min value    4713 BC
+        // - Max value  294276 AD
+        // - Max resolution  1 microsecond
+        if value.count == 8 {
+          // 1_000_000
+          let msecs = Double(UInt64(bigEndian: cast(value.baseAddress!)))
+          let date = Date(timeInterval: TimeInterval(msecs) / 1000000.0,
+                          since: Date.pgReferenceDate)
+          return date
+        }
         return String(cString: value.baseAddress!)
       case OIDs.TIMESTAMP:
         return String(cString: value.baseAddress!)
@@ -528,4 +542,10 @@ fileprivate func tdup<T>(_ value: T) -> UnsafeBufferPointer<Int8> {
   let ptr = UnsafeMutablePointer<T>(raw)
   ptr.pointee = value
   return UnsafeBufferPointer(start: UnsafePointer(raw), count: len)
+}
+
+fileprivate extension Date {
+  
+  // 2000-01-01
+  static let pgReferenceDate = Date(timeIntervalSince1970: 946684800)
 }
