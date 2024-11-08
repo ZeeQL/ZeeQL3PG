@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/17.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 import Foundation
@@ -22,7 +22,9 @@ open class PostgreSQLAdaptor : Adaptor, SmartDescription {
   
   /// The connectString the adaptor was configured with.
   open var connectString : String
-  
+
+  private let pool : AdaptorChannelPool?
+
   /**
    * Configure the adaptor with the given connect string.
    *
@@ -48,9 +50,10 @@ open class PostgreSQLAdaptor : Adaptor, SmartDescription {
    * Note: The init doesn't validate the connect string, if it is malformed,
    *       channel creation will fail.
    */
-  public init(_ connectString: String) {
+  public init(_ connectString: String, pool: AdaptorChannelPool? = nil) {
     // TODO: could call PQconninfoParse(constr, &error) to validate
     self.connectString = connectString
+    self.pool = pool
   }
   
   /**
@@ -63,7 +66,8 @@ open class PostgreSQLAdaptor : Adaptor, SmartDescription {
    */
   public convenience init(host: String = "127.0.0.1", port: Int = 5432,
                           database: String = "postgres",
-                          user: String = "postgres",  password: String = "")
+                          user: String = "postgres",  password: String = "",
+                          pool: AdaptorChannelPool? = nil)
   {
     var s = ""
     if !host.isEmpty     { s += " host=\(host)"         }
@@ -71,7 +75,7 @@ open class PostgreSQLAdaptor : Adaptor, SmartDescription {
     if !database.isEmpty { s += " dbname=\(database)"   }
     if !user.isEmpty     { s += " user=\(user)"         }
     if !password.isEmpty { s += " password=\(password)" }
-    self.init(s)
+    self.init(s, pool: pool)
   }
   
   private func parseConnectionString(_ s: String) -> [ String : String ] {
@@ -147,10 +151,37 @@ open class PostgreSQLAdaptor : Adaptor, SmartDescription {
     return PostgreSQLAdaptorChannel(adaptor: self, handle: handle)
   }
   
-  public func releaseChannel(_ channel: AdaptorChannel) {
-    // not maintaing a pool
+  public func openChannelFromPool() throws -> AdaptorChannel {
+    if let channel = pool?.grab() {
+      log.info("reusing pooled channel:", channel)
+      return channel
+    }
+    do {
+      let channel = try openChannel()
+      if pool != nil {
+        log.info("opened new channel:", channel)
+      }
+      return channel
+    }
+    catch {
+      throw error
+    }
   }
   
+  public func releaseChannel(_ channel: AdaptorChannel) {
+    guard let pool = pool else {
+      return
+    }
+    if let channel = channel as? PostgreSQLAdaptorChannel {
+      log.info("releasing channel:", ObjectIdentifier(channel))
+      pool.add(channel)
+    }
+    else {
+      log.info("invalid channel type:", channel)
+      assert(channel is PostgreSQLAdaptorChannel)
+    }
+  }
+
   
   // MARK: - Model
   
@@ -172,8 +203,9 @@ open class PostgreSQLAdaptor : Adaptor, SmartDescription {
 
   public func appendToDescription(_ ms: inout String) {
     ms += " " + connectString
-    if model != nil {
+    if let model = model {
       ms += " has-model"
+      if model.isPattern { ms += "(pattern)" }
     }
   }
 }
