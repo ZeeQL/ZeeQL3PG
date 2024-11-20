@@ -193,10 +193,12 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
       for bind in bindings {
         // if logSQL { print("  BIND[\(idx)]: \(bind)") }
         
-        let type     : Oid
-        let length   : Int32
-        let isBinary : Int32 = BinaryFlag
-        let rawValue : UnsafePointer<Int8>?
+        struct Bind { // move out
+          var type     : Oid   = 0
+          var length   : Int32 = 0
+          var isBinary : Int32 = BinaryFlag
+          var rawValue : UnsafePointer<Int8>? = nil
+        }
 
         if let attr = bind.attribute {
           if logSQL { print("  BIND[\(idx)]: \(attr.name)") }
@@ -205,48 +207,61 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
         }
         
         // TODO: Add a protocol to do this?
-        if let value = bind.value {
-          if let value = value as? String {
-            if logSQL { print("      [\(idx)]> bind string \"\(value)\"") }
-            type     = OIDs.VARCHAR
-            rawValue = UnsafePointer(strdup(value))
-            length   = rawValue != nil ? Int32(strlen(rawValue!)) : 0
+        func bindAnyValue(_ value: Any?) throws -> Bind {
+          guard let value = value else {
+            if logSQL { print("      [\(idx)]> bind NULL") }
+            // TODO: set value to NULL
+            return Bind(type: 0 /*Hmmm*/, length: 0, rawValue: nil)
+          }
+          switch value {
+            case let value as String:
+              if logSQL { print("      [\(idx)]> bind string \"\(value)\"") }
               // TODO: include 0 in length?
+              let rawValue = UnsafePointer(strdup(value))
+              return Bind(type: OIDs.VARCHAR,
+                          length: rawValue.flatMap { Int32(strlen($0)) } ?? 0,
+                          rawValue: rawValue)
+            case let value as Int:
+              if logSQL { print("      [\(idx)]> bind int \(value)") }
+              let bp   = tdup(value.bigEndian)
+              return Bind(type: MemoryLayout<Int>.size == 8
+                          ? OIDs.INT8 : OIDs.INT4,
+                          length: Int32(bp.count), rawValue: bp.baseAddress!)
+            case let value as Int32: return try bindAnyValue(Int(value))
+            case let value as Int64: return try bindAnyValue(Int(value))
+            case let value as any BinaryInteger:
+              return try bindAnyValue(Int(value))
+            case let value as GlobalID:
+              assert(value.keyCount == 1)
+              switch value.value {
+                case .singleNil         : return try bindAnyValue(nil)
+                case .int   (let value) : return try bindAnyValue(value)
+                case .string(let value) : return try bindAnyValue(value)
+                case .uuid  (let value) : return try bindAnyValue(value)
+                case .values(let values):
+                  if values.count > 1 {
+                    throw Error.ExecError(reason: "Invalid multi-gid bind",
+                                          sql: sql)
+                  }
+                  if let value = values.first { return try bindAnyValue(value) }
+                  else { return try bindAnyValue(nil) }
+              }
+            default: // TODO
+              if logSQL { print("      [\(idx)]> bind other \(value)") }
+              assertionFailure("Unexpected value, please add explicit type")
+              let rawValue = UnsafePointer(strdup(String(describing: value)))
+              return Bind(type: OIDs.VARCHAR,
+                          length: rawValue.flatMap { Int32(strlen($0)) } ?? 0,
+                          rawValue: rawValue)
           }
-          else if let value = value as? SingleIntKeyGlobalID { // hacky
-            if logSQL { print("      [\(idx)]> bind key \(value)") }
-            type     = MemoryLayout<Int>.size == 8 ? OIDs.INT8 : OIDs.INT4
-            let bp   = tdup(value.value.bigEndian)
-            rawValue = bp.baseAddress!
-            length   = Int32(bp.count)
-          }
-          else if let value = value as? Int { // TODO: Other Integers
-            if logSQL { print("      [\(idx)]> bind int \(value)") }
-            type     = MemoryLayout<Int>.size == 8 ? OIDs.INT8 : OIDs.INT4
-            let bp   = tdup(value.bigEndian)
-            rawValue = bp.baseAddress!
-            length   = Int32(bp.count)
-          }
-          else { // TODO
-            if logSQL { print("      [\(idx)]> bind other \(value)") }
-            type = OIDs.VARCHAR
-            rawValue = UnsafePointer(strdup("\(value)"))
-            length   = rawValue != nil ? Int32(strlen(rawValue!)) : 0
-              // TODO: include 0 in length?
-          }
-        }
-        else {
-          if logSQL { print("      [\(idx)]> bind NULL") }
-          // TODO: set value to NULL
-          type     = 0 // Hm
-          length   = 0
-          rawValue = nil
         }
         
-        bindingTypes   .append(type)
-        bindingLengths .append(length)
-        bindingIsBinary.append(isBinary)
-        bindingValues  .append(rawValue)
+        let bindInfo = try bindAnyValue(bind.value)
+        
+        bindingTypes   .append(bindInfo.type)
+        bindingLengths .append(bindInfo.length)
+        bindingIsBinary.append(bindInfo.isBinary)
+        bindingValues  .append(bindInfo.rawValue)
       }
       
       idx += 1
