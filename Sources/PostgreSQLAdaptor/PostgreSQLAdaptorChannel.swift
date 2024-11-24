@@ -511,12 +511,10 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
   
   // MARK: - Insert w/ auto-increment support
   
-  open func insertRow(_ row: AdaptorRow, _ entity: Entity?, refetchAll: Bool)
+  open func insertRow(_ row: AdaptorRow, _ entity: Entity, refetchAll: Bool)
               throws -> AdaptorRow
   {
-    let attributes : [ Attribute ]? = {
-      guard let entity = entity else { return nil }
-      
+    let attributes : [ Attribute ]? = {      
       if refetchAll { return entity.attributes }
       
       // TBD: refetch-all if no pkeys are assigned
