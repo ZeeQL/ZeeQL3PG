@@ -31,6 +31,9 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
     case NotImplemented
     case ConnectionClosed
   }
+  
+  static let isDebugDefaultOn =
+               UserDefaults.standard.bool(forKey: "PGDebugEnabled")
 
   public let expressionFactory : SQLExpressionFactory
   public var handle : OpaquePointer?
@@ -39,7 +42,7 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
   init(adaptor: Adaptor, handle: OpaquePointer) {
     self.expressionFactory = adaptor.expressionFactory
     self.handle = handle
-    self.logSQL = UserDefaults.standard.bool(forKey: "PGDebugEnabled")
+    self.logSQL = Self.isDebugDefaultOn
   }
   
   deinit {
@@ -453,6 +456,7 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
   
   public var isTransactionInProgress : Bool = false
   
+  @inlinable
   public func begin() throws {
     guard !isTransactionInProgress
      else { throw AdaptorChannelError.TransactionInProgress }
@@ -460,10 +464,12 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
     try performSQL("BEGIN TRANSACTION;")
     isTransactionInProgress = true
   }
+  @inlinable
   public func commit() throws {
     isTransactionInProgress = false
     try performSQL("COMMIT TRANSACTION;")
   }
+  @inlinable
   public func rollback() throws {
     isTransactionInProgress = false
     try performSQL("ROLLBACK TRANSACTION;")
@@ -492,17 +498,21 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
 
   // MARK: - reflection
   
+  @inlinable
   public func describeSequenceNames() throws -> [ String ] {
     return try PostgreSQLModelFetch(channel: self).describeSequenceNames()
   }
   
+  @inlinable
   public func describeDatabaseNames() throws -> [ String ] {
     return try PostgreSQLModelFetch(channel: self).describeDatabaseNames()
   }
+  @inlinable
   public func describeTableNames() throws -> [ String ] {
     return try PostgreSQLModelFetch(channel: self).describeTableNames()
   }
 
+  @inlinable
   public func describeEntityWithTableName(_ table: String) throws -> Entity? {
     return try PostgreSQLModelFetch(channel: self)
                  .describeEntityWithTableName(table)
@@ -511,10 +521,11 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
   
   // MARK: - Insert w/ auto-increment support
   
+  @inlinable
   open func insertRow(_ row: AdaptorRow, _ entity: Entity, refetchAll: Bool)
               throws -> AdaptorRow
   {
-    let attributes : [ Attribute ]? = {      
+    let attributes : [ Attribute ]? = {
       if refetchAll { return entity.attributes }
       
       // TBD: refetch-all if no pkeys are assigned
