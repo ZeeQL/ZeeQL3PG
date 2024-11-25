@@ -333,7 +333,7 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
         // - Max resolution  1 microsecond
         if value.count == 8 {
           // 1_000_000
-          let msecs = Double(UInt64(bigEndian: cast(value.baseAddress!)))
+          let msecs = Double(Int64(bigEndian: cast(value.baseAddress!)))
           let date = Date(timeInterval: TimeInterval(msecs) / 1000000.0,
                           since: Date.pgReferenceDate)
           return date
@@ -541,7 +541,10 @@ fileprivate extension Date {
 
 // MARK: - Binding
 
-fileprivate struct Bind { // move out
+fileprivate struct Bind {
+  // So this always has the value *malloc*'ed in rawValue, which is not
+  // particularily great :-)
+  
   var type     : Oid   = 0
   var length   : Int32 = 0
   var isBinary : Int32 = BinaryFlag
@@ -591,6 +594,18 @@ extension Int   : PGBindableValue {}
 extension UInt  : PGBindableValue {}
 extension Int32 : PGBindableValue {}
 extension Int64 : PGBindableValue {}
+
+extension Date: PGBindableValue {
+  
+  fileprivate func bind(index idx: Int, log: Bool) throws -> Bind {
+    let diff  = self.timeIntervalSince(Date.pgReferenceDate)
+    let msecs = Int64(diff * 1000000.0) // seconds to milliseconds
+    let bp    = tdup(msecs.bigEndian)
+    return Bind(type: OIDs.TIMESTAMPTZ, // 1184
+                length: 8,
+                rawValue: bp.baseAddress!)
+  }
+}
 
 extension UUID: PGBindableValue {
   fileprivate func bind(index idx: Int, log: Bool) throws -> Bind {
