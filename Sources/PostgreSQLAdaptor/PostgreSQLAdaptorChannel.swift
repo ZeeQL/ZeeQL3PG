@@ -196,19 +196,13 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
       for bind in bindings {
         // if logSQL { print("  BIND[\(idx)]: \(bind)") }
         
-        struct Bind { // move out
-          var type     : Oid   = 0
-          var length   : Int32 = 0
-          var isBinary : Int32 = BinaryFlag
-          var rawValue : UnsafePointer<Int8>? = nil
-        }
-
         if let attr = bind.attribute {
           if logSQL { print("  BIND[\(idx)]: \(attr.name)") }
           
           // TODO: ask attribute for OID
         }
         
+        // FIXME(hh 2024-11-25): Unnested all this stuff.
         // TODO: Add a protocol to do this?
         func bindAnyValue(_ value: Any?) throws -> Bind {
           guard let value = value else {
@@ -216,47 +210,17 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
             // TODO: set value to NULL
             return Bind(type: 0 /*Hmmm*/, length: 0, rawValue: nil)
           }
-          switch value {
-            case let value as String:
-              if logSQL { print("      [\(idx)]> bind string \"\(value)\"") }
-              // TODO: include 0 in length?
-              let rawValue = UnsafePointer(strdup(value))
-              return Bind(type: OIDs.VARCHAR,
-                          length: rawValue.flatMap { Int32(strlen($0)) } ?? 0,
-                          rawValue: rawValue)
-            case let value as Int:
-              if logSQL { print("      [\(idx)]> bind int \(value)") }
-              let bp   = tdup(value.bigEndian)
-              return Bind(type: MemoryLayout<Int>.size == 8
-                          ? OIDs.INT8 : OIDs.INT4,
-                          length: Int32(bp.count), rawValue: bp.baseAddress!)
-            case let value as Int32: return try bindAnyValue(Int(value))
-            case let value as Int64: return try bindAnyValue(Int(value))
-            case let value as any BinaryInteger:
-              return try bindAnyValue(Int(value))
-            case let value as GlobalID:
-              assert(value.keyCount == 1)
-              switch value.value {
-                case .singleNil         : return try bindAnyValue(nil)
-                case .int   (let value) : return try bindAnyValue(value)
-                case .string(let value) : return try bindAnyValue(value)
-                case .uuid  (let value) : return try bindAnyValue(value)
-                case .values(let values):
-                  if values.count > 1 {
-                    throw Error.ExecError(reason: "Invalid multi-gid bind",
-                                          sql: sql)
-                  }
-                  if let value = values.first { return try bindAnyValue(value) }
-                  else { return try bindAnyValue(nil) }
-              }
-            default: // TODO
-              if logSQL { print("      [\(idx)]> bind other \(value)") }
-              assertionFailure("Unexpected value, please add explicit type")
-              let rawValue = UnsafePointer(strdup(String(describing: value)))
-              return Bind(type: OIDs.VARCHAR,
-                          length: rawValue.flatMap { Int32(strlen($0)) } ?? 0,
-                          rawValue: rawValue)
+          
+          if let value = value as? PGBindableValue {
+            return try value.bind(index: idx, log: logSQL)
           }
+          
+          if logSQL { print("      [\(idx)]> bind other \(value)") }
+          assertionFailure("Unexpected value, please add explicit type")
+          let rawValue = UnsafePointer(strdup(String(describing: value)))
+          return Bind(type: OIDs.VARCHAR,
+                      length: rawValue.flatMap { Int32(strlen($0)) } ?? 0,
+                      rawValue: rawValue)
         }
         
         let bindInfo = try bindAnyValue(bind.value)
@@ -572,4 +536,88 @@ fileprivate extension Date {
   
   // 2000-01-01
   static let pgReferenceDate = Date(timeIntervalSince1970: 946684800)
+}
+
+
+// MARK: - Binding
+
+fileprivate struct Bind { // move out
+  var type     : Oid   = 0
+  var length   : Int32 = 0
+  var isBinary : Int32 = BinaryFlag
+  var rawValue : UnsafePointer<Int8>? = nil
+}
+
+fileprivate protocol PGBindableValue {
+  
+  func bind(index: Int, log: Bool) throws -> Bind
+}
+
+extension Optional: PGBindableValue where Wrapped: PGBindableValue {
+  
+  fileprivate func bind(index idx: Int, log: Bool) throws -> Bind {
+    switch self {
+      case .some(let value): return try value.bind(index: idx, log: log)
+      case .none:
+        if log { print("      [\(idx)]> bind NULL") }
+        return Bind(type: 0 /*Hmmm*/, length: 0, rawValue: nil)
+    }
+  }
+}
+
+extension String: PGBindableValue {
+  
+  fileprivate func bind(index idx: Int, log: Bool) throws -> Bind {
+    if log { print("      [\(idx)]> bind string \"\(self)\"") }
+    // TODO: include 0 in length?
+    let rawValue = UnsafePointer(strdup(self))
+    return Bind(type: OIDs.VARCHAR,
+                length: rawValue.flatMap { Int32(strlen($0)) } ?? 0,
+                rawValue: rawValue)
+  }
+}
+extension BinaryInteger {
+  
+  fileprivate func bind(index idx: Int, log: Bool) throws -> Bind {
+    if log { print("      [\(idx)]> bind int \(self)") }
+    let value = Int(self) // Hmm
+    let bp    = tdup(value.bigEndian)
+    return Bind(type: MemoryLayout<Int>.size == 8
+                ? OIDs.INT8 : OIDs.INT4,
+                length: Int32(bp.count), rawValue: bp.baseAddress!)
+  }
+}
+extension Int   : PGBindableValue {}
+extension UInt  : PGBindableValue {}
+extension Int32 : PGBindableValue {}
+extension Int64 : PGBindableValue {}
+
+extension UUID: PGBindableValue {
+  fileprivate func bind(index idx: Int, log: Bool) throws -> Bind {
+    return try uuidString.bind(index: idx, log: log)
+  }
+}
+
+extension KeyGlobalID: PGBindableValue {
+  
+  fileprivate func bind(index idx: Int, log: Bool) throws -> Bind {
+    assert(keyCount == 1)
+    switch value {
+      case .singleNil:
+        return try Optional<String>.none.bind(index: idx, log: log)
+      case .int   (let value) : return try value.bind(index: idx, log: log)
+      case .string(let value) : return try value.bind(index: idx, log: log)
+      case .uuid  (let value) : return try value.bind(index: idx, log: log)
+      case .values(let values):
+        if values.count > 1 {
+          throw PostgreSQLAdaptorChannel.Error
+            .ExecError(reason: "Invalid multi-gid bind", sql: "")
+        }
+        assert(values.first is PGBindableValue)
+        if let value = values.first as? PGBindableValue {
+          return try value.bind(index: idx, log: log)
+        }
+        else { return try Optional<String>.none.bind(index: idx, log: log) }
+    }
+  }
 }
