@@ -3,7 +3,7 @@
 //  ZeeQL3Apache
 //
 //  Created by Helge Hess on 14/04/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 import ZeeQL
@@ -106,7 +106,7 @@ open class PostgreSQLModelFetch: AdaptorModelFetch {
   }
 
   public func describeEntitiesWithTableNames(_ tables: [ String ]) throws
-                -> [ Entity ]
+              -> [ Entity ]
   {
     guard !tables.isEmpty else { return [] }
     
@@ -294,11 +294,14 @@ open class PostgreSQLModelFetch: AdaptorModelFetch {
   }
 
   public func describeEntityWithTableName(_ table: String) throws -> Entity {
-    guard let entity = try describeEntitiesWithTableNames([table]).first
-     else { throw Error.DidNotFindTable(table) }
+    guard let entity = try describeEntitiesWithTableNames([table]).first else {
+      throw Error.DidNotFindTable(table)
+    }
     return entity
   }
 
+  // This is not used anymore, but rather `describeEntitiesWithTableNames`
+  #if false
   func _fetchPGColumnsOfTable(_ table: String) throws -> [ AdaptorRecord ] {
     /* Sample result:
      *  attnum |    colname     |   exttype   | attlen | attnotnull 
@@ -324,6 +327,7 @@ open class PostgreSQLModelFetch: AdaptorModelFetch {
               " AND c.relname='\(table)' ORDER BY attnum;";
     return try channel.querySQL(sql)
   }
+  #endif
   
   func _fetchPGPrimaryKeyNamesOfTable(_ table: String) throws -> [ String ] {
     guard !table.isEmpty else { return [] }
