@@ -3,7 +3,7 @@
 //  ZeeQL3Apache
 //
 //  Created by Helge Hess on 14/04/17.
-//  Copyright © 2017 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
 //
 
 import ZeeQL
@@ -106,7 +106,7 @@ open class PostgreSQLModelFetch: AdaptorModelFetch {
   }
 
   public func describeEntitiesWithTableNames(_ tables: [ String ]) throws
-                -> [ Entity ]
+              -> [ Entity ]
   {
     guard !tables.isEmpty else { return [] }
     
@@ -119,6 +119,14 @@ open class PostgreSQLModelFetch: AdaptorModelFetch {
       return expr.sqlStringFor(string: schemaName) + "::regclass"
     }).joined(separator: ",")
     
+    // Sample:
+    // table   | attnum | colname        | exttype | attlen | attnotnull
+    // --------+--------+----------------+---------+--------+------------
+    // address |      1 | address_id     | int4    |      4 | t
+    // address |      2 | object_version | int4    |      4 | f
+    // address |      3 | company_id     | int4    |      4 | f
+    // address |      4 | name1          | varchar |     -1 | f
+    // address |      5 | name2          | varchar |     -1 | f
     // TBD: use `format_type()` like below?
     //        format_type(pg_attribute.atttypid, pg_attribute.atttypmod)
     let attributeRecords = try channel.querySQL(
@@ -130,6 +138,12 @@ open class PostgreSQLModelFetch: AdaptorModelFetch {
        "ORDER BY c.relname, a.attnum;"
     )
     
+    // Sample:
+    // table                   | name
+    // ------------------------+---------------------------
+    // company_value           | company_value_id
+    // company_info            | company_info_id
+    // date_company_assignment | date_company_assignment_id
     // Remove 'indisprimary' to list all indexed attributes
     let pkeyRecords = try channel.querySQL(
       "SELECT pg_class.relname AS table, pg_attribute.attname AS name " +
@@ -143,6 +157,7 @@ open class PostgreSQLModelFetch: AdaptorModelFetch {
          "AND indisprimary;"
     )
     
+    // Empty in OGo.
     let autoIncrRecords = try channel.querySQL(
       "SELECT TAB.relname AS table, ATTR.attname AS name " +
       "  FROM pg_depend DEP " +
@@ -165,10 +180,11 @@ open class PostgreSQLModelFetch: AdaptorModelFetch {
     let recordsByTable : [ String : [ AdaptorRecord ] ] = {
       var grouped = [ String : [ AdaptorRecord ] ]()
       for record in attributeRecords {
-        guard let key = record["table"] as? String else { continue } // TBD
-        if case nil = grouped[key]?.append(record) {
-          grouped[key] = [ record ]
+        guard let key = record["table"] as? String else {
+          assertionFailure("Encountered a record w/o a `table` column?!")
+          continue
         }
+        grouped[key, default: []].append(record)
       }
       return grouped
     }()
@@ -176,11 +192,13 @@ open class PostgreSQLModelFetch: AdaptorModelFetch {
     let pkeysByTable : [ String : [ String ] ] = {
       var grouped = [ String : [ String ] ]()
       for record in pkeyRecords {
-        guard let key  = record["table"] as? String else { continue } // TBD
-        guard let pkey = record["name"]  as? String else { continue }
-        if case nil = grouped[key]?.append(pkey) {
-          grouped[key] = [ pkey ]
+        guard let key  = record["table"] as? String,
+              let pkey = record["name"]  as? String else
+        {
+          assertionFailure("Encountered a record w/o `table`/`name` columns?!")
+          continue
         }
+        grouped[key, default: []].append(pkey)
       }
       return grouped
     }()
@@ -188,11 +206,13 @@ open class PostgreSQLModelFetch: AdaptorModelFetch {
     let autoIncrByTable : [ String : Set<String> ] = {
       var grouped = [ String : Set<String> ]()
       for record in autoIncrRecords {
-        guard let key  = record["table"] as? String else { continue } // TBD
-        guard let pkey = record["name"]  as? String else { continue }
-        if case nil = grouped[key]?.insert(pkey) {
-          grouped[key] = Set<String>([ pkey ])
+        guard let key  = record["table"] as? String,
+              let pkey = record["name"]  as? String else
+        {
+          assertionFailure("Encountered a record w/o `table`/`name` columns?!")
+          continue
         }
+        grouped[key, default: []].insert(pkey)
       }
       return grouped
     }()
@@ -200,10 +220,11 @@ open class PostgreSQLModelFetch: AdaptorModelFetch {
     let fkeysByTable : [ String : [ AdaptorRecord ] ] = {
       var grouped = [ String : [ AdaptorRecord ] ]()
       for record in foreignKeyRecords {
-        guard let key = record["source_table"] as? String else { continue } // TBD
-        if case nil = grouped[key]?.append(record) {
-          grouped[key] = [ record ]
+        guard let key = record["source_table"] as? String else {
+          assertionFailure("Encountered a record w/o `source_table` column?!")
+          continue
         }
+        grouped[key, default: []].append(record)
       }
       return grouped
     }()
@@ -294,11 +315,14 @@ open class PostgreSQLModelFetch: AdaptorModelFetch {
   }
 
   public func describeEntityWithTableName(_ table: String) throws -> Entity {
-    guard let entity = try describeEntitiesWithTableNames([table]).first
-     else { throw Error.DidNotFindTable(table) }
+    guard let entity = try describeEntitiesWithTableNames([table]).first else {
+      throw Error.DidNotFindTable(table)
+    }
     return entity
   }
 
+  // This is not used anymore, but rather `describeEntitiesWithTableNames`
+  #if false
   func _fetchPGColumnsOfTable(_ table: String) throws -> [ AdaptorRecord ] {
     /* Sample result:
      *  attnum |    colname     |   exttype   | attlen | attnotnull 
@@ -324,6 +348,7 @@ open class PostgreSQLModelFetch: AdaptorModelFetch {
               " AND c.relname='\(table)' ORDER BY attnum;";
     return try channel.querySQL(sql)
   }
+  #endif
   
   func _fetchPGPrimaryKeyNamesOfTable(_ table: String) throws -> [ String ] {
     guard !table.isEmpty else { return [] }

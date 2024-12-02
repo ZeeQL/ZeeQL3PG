@@ -481,6 +481,13 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
     return try PostgreSQLModelFetch(channel: self)
                  .describeEntityWithTableName(table)
   }
+  @inlinable
+  public func describeEntitiesWithTableNames(_ tableNames: [ String ])
+                throws -> [ Entity ]
+  {
+    return try PostgreSQLModelFetch(channel: self)
+                 .describeEntitiesWithTableNames(tableNames)
+  }
 
   
   // MARK: - Insert w/ auto-increment support
