@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 02/03/2017.
-//  Copyright © 2017-2019 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 import XCTest
@@ -605,7 +605,7 @@ fileprivate func dump(row: AdaptorRecord, prefix: String = "    ") {
   }
 }
 
-extension ActiveRecord {
+extension ActiveRecordBase {
   
   func dumpRecordInColumns(indent: String = "") {
     // TODO: align width
