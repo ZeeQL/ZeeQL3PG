@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/17.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 #if os(Windows)
@@ -207,7 +207,6 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
         func bindAnyValue(_ value: Any?) throws -> Bind {
           guard let value = value else {
             if logSQL { print("      [\(idx)]> bind NULL") }
-            // TODO: set value to NULL
             return Bind(type: 0 /*Hmmm*/, length: 0, rawValue: nil)
           }
           
@@ -584,6 +583,15 @@ extension String: PGBindableValue {
     return Bind(type: OIDs.VARCHAR,
                 length: rawValue.flatMap { Int32(strlen($0)) } ?? 0,
                 rawValue: rawValue)
+  }
+}
+extension Bool: PGBindableValue {
+  
+  fileprivate func bind(index idx: Int, log: Bool) throws -> Bind {
+    if log { print("      [\(idx)]> bind int \(self)") }
+    let value = UInt8(self ? 0x1 : 0x0)
+    let bp    = tdup(value)
+    return Bind(type: OIDs.BOOL, length: Int32(1), rawValue: bp.baseAddress!)
   }
 }
 extension BinaryInteger {
