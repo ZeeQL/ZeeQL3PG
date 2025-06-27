@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/17.
-//  Copyright © 2017-2024 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
 //
 
 import Foundation
@@ -11,8 +11,6 @@ import ZeeQL
 import CLibPQ
 
 open class PostgreSQLAdaptor : Adaptor, SmartDescription {
-  // TODO: Pool. We really need one for PG. (well, not for ApacheExpress which
-  //       should use mod_dbd)
   
   public enum Error : Swift.Error {
     case Generic
@@ -29,20 +27,20 @@ open class PostgreSQLAdaptor : Adaptor, SmartDescription {
    * Configure the adaptor with the given connect string.
    *
    * A connect string can be a URL like:
-   *
-   *     postgresql://OGo:OGo@localhost:5432/OGo
-   *
+   * ```
+   * postgresql://OGo:OGo@localhost:5432/OGo
+   * ```
    * or a space separated list of parameters, like:
+   * ```
+   * host=localhost port=5432 dbname=OGo user=OGo
+   * ```
    *
-   *     host=localhost port=5432 dbname=OGo user=OGo
-   *
-   * Common parameters
-   *
-   * - host
-   * - port
-   * - dbname
-   * - user
-   * - password
+   * Common parameters:
+   * - `host`
+   * - `port`
+   * - `dbname`
+   * - `user`
+   * - `password`
    *
    * The full capabilities are listed in the
    * [PostgreSQL docs](https://www.postgresql.org/docs/9.4/static/libpq-connect.html#LIBPQ-CONNSTRING).
@@ -60,9 +58,18 @@ open class PostgreSQLAdaptor : Adaptor, SmartDescription {
    * Configure the adaptor with the given values.
    *
    * Example:
+   * ```swift
+   * let adaptor = PostgreSQLAdaptor(database: "OGo",
+   *                                 user: "OGo", password: "OGo")
+   * ```
    *
-   *     let adaptor = PostgreSQLAdaptor(database: "OGo", 
-   *                                     user: "OGo", password: "OGo")
+   * - Parameters:
+   *   - host:     The IP or hostname of the server, defaults to `127.0.0.1`.
+   *   - port:     The port the server runs on, defaults to `5432`.
+   *   - database: The database to connect to, defaults to `postgres`.
+   *   - user:     The PG role to connect as, defaults to `postgres`.
+   *   - password: The password for the PG role, defaults to an empty one.
+   *   - pool:     An optional `AdaptorChannelPool` to use.
    */
   public convenience init(host: String = "127.0.0.1", port: Int = 5432,
                           database: String = "postgres",
