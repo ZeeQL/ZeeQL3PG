@@ -666,9 +666,7 @@ extension KeyGlobalID: PGBindableValue {
   }
 }
 
-fileprivate func decodeTextArray(from buffer: UnsafeRawBufferPointer)
-                 -> [ String ]?
-{
+fileprivate func decodeTextArray(from buffer: UnsafeRawBufferPointer) -> Any? {
   // arrays, header:
   // - dimensions:  Int32      // e.g. 1
   // - flags:       UInt32     // 0=no nulls, 1=nulls
@@ -680,41 +678,63 @@ fileprivate func decodeTextArray(from buffer: UnsafeRawBufferPointer)
   // - size:        Int32
   // - value:       ^^^        // if no tnull
   // value in TEXT[] is UTF-8 string, not null terminated
-  var cursor = buffer.baseAddress!
+  guard var cursor = buffer.baseAddress else { return nil }
   
   func readInt32() -> Int32 {
-    defer { cursor += 4 }
+    defer { cursor += MemoryLayout<Int32>.size }
     return cursor.assumingMemoryBound(to: Int32.self).pointee.bigEndian
   }
   
   // header
   let ndim    = readInt32()
-  let _       = readInt32() // flags
+  let hasNull = readInt32() != 0 // flags, currently on 0 or 1?!
   let elemOID = readInt32()
   assert(elemOID == OIDs.TEXT)
   guard ndim == 1 else {
     assertionFailure("Only 1D arrays supported")
     return nil
   }
-  _ = readInt32() // dim length
-  _ = readInt32() // lower bound
   
-  var result: [String] = []
-  for _ in 0..<Int(ndim == 1 ? 2 : 0) {} // we’ll fill below
-  
-  // We don't know dim length until after header
-  let dimLength = Int(readInt32())
-  _ = readInt32() // lower bound again (fix structure)
-  for _ in 0..<dimLength {
-    let len = Int(readInt32().bigEndian)
-    if len == -1 {
-      result.append("") // or nil if you want optionals
+  do { // one dimension
+    let count      = readInt32()
+    assert(count >= 0 && count <= 100_000_000_000)
+    if count <= 0 { return Array<String>() }
+    
+    let lowerBound = readInt32()
+    assert(lowerBound == 1, "unexpected lower bound")
+    
+    if hasNull {
+      var result = [ String? ](); result.reserveCapacity(count)
+      
+      for _ in 0..<count {
+        let len = Int(readInt32().bigEndian)
+        if len < 0 {
+          result.append(nil)
+        }
+        else {
+          let strData = UnsafeRawBufferPointer(start: cursor, count: len)
+          cursor += len
+          result.append(String(data: strData, encoding: .utf8)!)
+        }
+      }
+      return result
     }
     else {
-      let strData = Data(bytes: cursor, count: len)
-      cursor += len
-      result.append(String(data: strData, encoding: .utf8)!)
+      var result = [ String ](); result.reserveCapacity(count)
+      
+      for _ in 0..<count {
+        let len = Int(readInt32().bigEndian)
+        if len == -1 {
+          assertionFailure("Array set to non-null, but contains nulls?")
+          result.append("")
+        }
+        else {
+          let strData = UnsafeRawBufferPointer(start: cursor, count: len)
+          cursor += len
+          result.append(String(data: strData, encoding: .utf8)!)
+        }
+      }
+      return result
     }
   }
-  return result
 }
