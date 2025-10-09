@@ -697,14 +697,14 @@ fileprivate func decodeTextArray(from buffer: UnsafeRawBufferPointer) -> Any? {
   
   do { // one dimension
     let count      = readInt32()
-    assert(count >= 0 && count <= 100_000_000_000)
+    assert(count >= 0 && count <= 1_000_000_000)
     if count <= 0 { return Array<String>() }
     
     let lowerBound = readInt32()
     assert(lowerBound == 1, "unexpected lower bound")
     
     if hasNull {
-      var result = [ String? ](); result.reserveCapacity(count)
+      var result = [ String? ](); result.reserveCapacity(Int(count))
       
       for _ in 0..<count {
         let len = Int(readInt32().bigEndian)
@@ -714,13 +714,13 @@ fileprivate func decodeTextArray(from buffer: UnsafeRawBufferPointer) -> Any? {
         else {
           let strData = UnsafeRawBufferPointer(start: cursor, count: len)
           cursor += len
-          result.append(String(data: strData, encoding: .utf8)!)
+          result.append(String(decoding: strData, as: UTF8.self))
         }
       }
       return result
     }
     else {
-      var result = [ String ](); result.reserveCapacity(count)
+      var result = [ String ](); result.reserveCapacity(Int(count))
       
       for _ in 0..<count {
         let len = Int(readInt32().bigEndian)
@@ -731,7 +731,7 @@ fileprivate func decodeTextArray(from buffer: UnsafeRawBufferPointer) -> Any? {
         else {
           let strData = UnsafeRawBufferPointer(start: cursor, count: len)
           cursor += len
-          result.append(String(data: strData, encoding: .utf8)!)
+          result.append(String(decoding: strData, as: UTF8.self))
         }
       }
       return result
