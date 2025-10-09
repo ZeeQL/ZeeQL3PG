@@ -684,9 +684,17 @@ fileprivate func decodeTextArray(from buffer: UnsafeRawBufferPointer) -> Any? {
     defer { cursor += MemoryLayout<Int32>.size }
     return cursor.assumingMemoryBound(to: Int32.self).pointee.bigEndian
   }
-  
+  func readString(_ len: Int) -> String? {
+    if len < 0 { return nil }
+    let slice = UnsafeRawBufferPointer(start: cursor, count: len)
+    cursor += Int(len)
+    return String(decoding: slice, as: UTF8.self)
+  }
+
   // header
   let ndim    = readInt32()
+  guard ndim != 0 else { return [] } // empty arrays have dim 0
+  
   let hasNull = readInt32() != 0 // flags, currently on 0 or 1?!
   let elemOID = readInt32()
   assert(elemOID == OIDs.TEXT)
@@ -694,6 +702,7 @@ fileprivate func decodeTextArray(from buffer: UnsafeRawBufferPointer) -> Any? {
     assertionFailure("Only 1D arrays supported")
     return nil
   }
+  
   
   do { // one dimension
     let count      = readInt32()
@@ -707,15 +716,8 @@ fileprivate func decodeTextArray(from buffer: UnsafeRawBufferPointer) -> Any? {
       var result = [ String? ](); result.reserveCapacity(Int(count))
       
       for _ in 0..<count {
-        let len = Int(readInt32().bigEndian)
-        if len < 0 {
-          result.append(nil)
-        }
-        else {
-          let strData = UnsafeRawBufferPointer(start: cursor, count: len)
-          cursor += len
-          result.append(String(decoding: strData, as: UTF8.self))
-        }
+        let len = readInt32()
+        result.append(readString(Int(len)))
       }
       return result
     }
@@ -723,15 +725,13 @@ fileprivate func decodeTextArray(from buffer: UnsafeRawBufferPointer) -> Any? {
       var result = [ String ](); result.reserveCapacity(Int(count))
       
       for _ in 0..<count {
-        let len = Int(readInt32().bigEndian)
-        if len == -1 {
-          assertionFailure("Array set to non-null, but contains nulls?")
-          result.append("")
+        let len = readInt32()
+        if let s = readString(Int(len)) {
+          result.append(s)
         }
         else {
-          let strData = UnsafeRawBufferPointer(start: cursor, count: len)
-          cursor += len
-          result.append(String(decoding: strData, as: UTF8.self))
+          assertionFailure("Array set to non-null, but contains nulls?")
+          result.append("")
         }
       }
       return result
