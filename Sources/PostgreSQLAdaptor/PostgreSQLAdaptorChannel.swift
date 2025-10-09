@@ -302,9 +302,15 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
     // TODO: do not crash on force unwrap
     
     switch type {
-      case OIDs.INT2:    return Int16(bigEndian: cast(value.baseAddress!))
-      case OIDs.INT4:    return Int32(bigEndian: cast(value.baseAddress!))
-      case OIDs.INT8:    return Int64(bigEndian: cast(value.baseAddress!))
+      case OIDs.INT2:
+        guard let addr = value.baseAddress else { return nil }
+        return Int16(bigEndian: cast(addr))
+      case OIDs.INT4:
+        guard let addr = value.baseAddress else { return nil }
+        return Int32(bigEndian: cast(addr))
+      case OIDs.INT8:
+        guard let addr = value.baseAddress else { return nil }
+        return Int64(bigEndian: cast(addr))
       
       // Float has no bigEndian
       //  case OIDs.FLOAT4:  return Float32(bigEndian: cast(value.baseAddress!))
@@ -313,10 +319,12 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
       case OIDs.BOOL:    return (value.baseAddress!.pointee != 0)
       
       case OIDs.VARCHAR, OIDs.TEXT, OIDs.CHAR:
-        return String(cString: value.baseAddress!)
+        guard let addr = value.baseAddress else { return nil }
+        return String(cString: addr)
       
       case OIDs.NAME: // e.g. SELECT datname FROM pg_database
-        return String(cString: value.baseAddress!)
+        guard let addr = value.baseAddress else { return nil }
+        return String(cString: addr)
       
       case OIDs.TIMESTAMPTZ: // 1184
         // TODO: I think it is better to fix this during the query, that is,
@@ -337,14 +345,20 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
                           since: Date.pgReferenceDate)
           return date
         }
-        return String(cString: value.baseAddress!)
+        guard let addr = value.baseAddress else { return nil }
+        return String(cString: addr)
       case OIDs.TIMESTAMP:
-        return String(cString: value.baseAddress!)
+        guard let addr = value.baseAddress else { return nil }
+        return String(cString: addr)
 
       case OIDs.OID:
         // https://www.postgresql.org/docs/9.5/static/datatype-oid.html
-        return UInt32(bigEndian: cast(value.baseAddress!))
+        guard let addr = value.baseAddress else { return nil }
+        return UInt32(bigEndian: cast(addr))
       
+        
+      case OIDs.ARRAY_OF_TEXT:
+        return decodeTextArray(from: UnsafeRawBufferPointer(value))
 
       default:
         print("Unexpected OID: \(type): \(String(cString:value.baseAddress!))")
@@ -650,4 +664,57 @@ extension KeyGlobalID: PGBindableValue {
         else { return try Optional<String>.none.bind(index: idx, log: log) }
     }
   }
+}
+
+fileprivate func decodeTextArray(from buffer: UnsafeRawBufferPointer)
+                 -> [ String ]?
+{
+  // arrays, header:
+  // - dimensions:  Int32      // e.g. 1
+  // - flags:       UInt32     // 0=no nulls, 1=nulls
+  // - elementType: OID/UInt32 // e.g. TEXT(25) for TEXT[](1009)
+  // then for each dimension:
+  // - count:       Int32
+  // - lower bound: Int32      // usually 1
+  // then for each elements:
+  // - size:        Int32
+  // - value:       ^^^        // if no tnull
+  // value in TEXT[] is UTF-8 string, not null terminated
+  var cursor = buffer.baseAddress!
+  
+  func readInt32() -> Int32 {
+    defer { cursor += 4 }
+    return cursor.assumingMemoryBound(to: Int32.self).pointee.bigEndian
+  }
+  
+  // header
+  let ndim    = readInt32()
+  let _       = readInt32() // flags
+  let elemOID = readInt32()
+  assert(elemOID == OIDs.TEXT)
+  guard ndim == 1 else {
+    assertionFailure("Only 1D arrays supported")
+    return nil
+  }
+  _ = readInt32() // dim length
+  _ = readInt32() // lower bound
+  
+  var result: [String] = []
+  for _ in 0..<Int(ndim == 1 ? 2 : 0) {} // we’ll fill below
+  
+  // We don't know dim length until after header
+  let dimLength = Int(readInt32())
+  _ = readInt32() // lower bound again (fix structure)
+  for _ in 0..<dimLength {
+    let len = Int(readInt32().bigEndian)
+    if len == -1 {
+      result.append("") // or nil if you want optionals
+    }
+    else {
+      let strData = Data(bytes: cursor, count: len)
+      cursor += len
+      result.append(String(data: strData, encoding: .utf8)!)
+    }
+  }
+  return result
 }
