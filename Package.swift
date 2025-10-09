@@ -1,4 +1,4 @@
-// swift-tools-version:4.2
+// swift-tools-version:5.0
 
 import PackageDescription
 
@@ -10,7 +10,7 @@ let package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/ZeeQL/CLibPQ.git", from: "2.0.4"),
-    .package(url: "https://github.com/ZeeQL/ZeeQL3.git", from: "0.9.9")
+    .package(url: "https://github.com/ZeeQL/ZeeQL3.git", from: "0.9.38")
   ],
   targets: [
     .target(name: "PostgreSQLAdaptor", dependencies: [ "CLibPQ", "ZeeQL" ])
