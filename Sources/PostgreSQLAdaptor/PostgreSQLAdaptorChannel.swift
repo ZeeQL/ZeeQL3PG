@@ -214,6 +214,13 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
             return try value.bind(index: idx, log: logSQL)
           }
           
+          if let variable = value as? QualifierVariable {
+            struct UnresolvedQualifier: Swift.Error {
+              let key : String
+            }
+            throw UnresolvedQualifier(key: variable.key)
+          }
+          
           if logSQL { print("      [\(idx)]> bind other \(value)") }
           assertionFailure("Unexpected value, please add explicit type")
           let rawValue = UnsafePointer(strdup(String(describing: value)))
