@@ -19,19 +19,20 @@ import CLibPQ
 
 fileprivate let BinaryFlag : Int32 = 1
 
+public enum PostgreSQLAdaptorChannelError: Swift.Error {
+
+  case execError  (reason: String, sql: String)
+  case badResponse(reason: String, sql: String)
+  case fatalError (reason: String, sql: String)
+  case unsupportedResultType(String)
+
+  case generic
+  case notImplemented
+  case connectionClosed
+}
+
 open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
 
-  public enum Error : Swift.Error {
-    case ExecError  (reason: String, sql: String)
-    case BadResponse(reason: String, sql: String)
-    case FatalError (reason: String, sql: String)
-    case UnsupportedResultType(String)
-    
-    case Generic
-    case NotImplemented
-    case ConnectionClosed
-  }
-  
   static let isDebugDefaultOn =
                UserDefaults.standard.bool(forKey: "PGDebugEnabled")
 
@@ -162,7 +163,7 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
                        cb: ( AdaptorRecord ) throws -> Void) throws
                -> Int?
   {
-    guard let handle = handle else { throw Error.ConnectionClosed }
+    guard let handle = handle else { throw PostgreSQLAdaptorChannelError.connectionClosed }
     
     let defaultReason = "Could not performSQL"
     if logSQL { print("SQL: \(sql)") }
@@ -250,7 +251,7 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
                                     bindingLengths,
                                     bindingIsBinary, BinaryFlag)
      else {
-      throw Error.ExecError(reason: lastError ?? defaultReason,
+      throw PostgreSQLAdaptorChannelError.execError(reason: lastError ?? defaultReason,
                             sql: sql)
     }
     defer { PQclear(result) }
@@ -264,20 +265,20 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
       case PGRES_COMMAND_OK:  break      // no data
       
       case PGRES_NONFATAL_ERROR:
-        throw Error.ExecError(reason: lastError ?? defaultReason, sql: sql)
+        throw PostgreSQLAdaptorChannelError.execError(reason: lastError ?? defaultReason, sql: sql)
 
       case PGRES_FATAL_ERROR:
-        throw Error.FatalError(reason: lastError ?? defaultReason, sql: sql)
+        throw PostgreSQLAdaptorChannelError.fatalError(reason: lastError ?? defaultReason, sql: sql)
       
       case PGRES_BAD_RESPONSE:
         // TBD: close connection?
-        throw Error.BadResponse(reason: lastError ?? defaultReason, sql: sql)
+        throw PostgreSQLAdaptorChannelError.badResponse(reason: lastError ?? defaultReason, sql: sql)
       
       // TODO: support COPY
-      case PGRES_COPY_IN:   throw Error.UnsupportedResultType("COPY_IN")
-      case PGRES_COPY_OUT:  throw Error.UnsupportedResultType("COPY_OUT")
-      case PGRES_COPY_BOTH: throw Error.UnsupportedResultType("COPY_BOTH")
-      default:              throw Error.UnsupportedResultType("\(status)")
+      case PGRES_COPY_IN:   throw PostgreSQLAdaptorChannelError.unsupportedResultType("COPY_IN")
+      case PGRES_COPY_OUT:  throw PostgreSQLAdaptorChannelError.unsupportedResultType("COPY_OUT")
+      case PGRES_COPY_BOTH: throw PostgreSQLAdaptorChannelError.unsupportedResultType("COPY_BOTH")
+      default:              throw PostgreSQLAdaptorChannelError.unsupportedResultType("\(status)")
     }
     
     guard let cstr = PQcmdTuples(result) else { return nil }
@@ -661,8 +662,8 @@ extension KeyGlobalID: PGBindableValue {
       case .uuid  (let value) : return try value.bind(index: idx, log: log)
       case .values(let values):
         if values.count > 1 {
-          throw PostgreSQLAdaptorChannel.Error
-            .ExecError(reason: "Invalid multi-gid bind", sql: "")
+          throw PostgreSQLAdaptorChannelError
+            .execError(reason: "Invalid multi-gid bind", sql: "")
         }
         assert(values.first is PGBindableValue)
         if let value = values.first as? PGBindableValue {

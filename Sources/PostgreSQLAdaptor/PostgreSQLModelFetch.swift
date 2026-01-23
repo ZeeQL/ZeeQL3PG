@@ -8,19 +8,20 @@
 
 import ZeeQL
 
+public enum PostgreSQLModelFetchError: Swift.Error {
+
+  case gotNoSchemaVersion
+  case notImplemented
+  case didNotFindTable(String)
+}
+
 /**
  * Wraps queries which do PostgreSQL schema reflection.
  */
 open class PostgreSQLModelFetch: AdaptorModelFetch {
-  
+
   let log : ZeeQLLogger = globalZeeQLLogger
-  
-  public enum Error : Swift.Error {
-    case GotNoSchemaVersion
-    case NotImplemented
-    case DidNotFindTable(String)
-  }
-  
+
   public var channel    : AdaptorChannel
   
   // TODO: not in here I think! Rather create a new model from a base-db only
@@ -47,7 +48,7 @@ open class PostgreSQLModelFetch: AdaptorModelFetch {
     try channel.select(sql) { ( hash : String ) in
       tagOpt = PostgreSQLModelTag(hash: hash)
     }
-    guard let tag = tagOpt else { throw Error.GotNoSchemaVersion }
+    guard let tag = tagOpt else { throw PostgreSQLModelFetchError.gotNoSchemaVersion }
     return tag
   }
   
@@ -232,7 +233,7 @@ open class PostgreSQLModelFetch: AdaptorModelFetch {
     for table in tables {
       // TBD: fetch PG schema name (namespace) or add it to the method args?
       guard let columnInfos = recordsByTable[table] else {
-        throw Error.DidNotFindTable(table)
+        throw PostgreSQLModelFetchError.didNotFindTable(table)
       }
       let pkeyNames   = pkeysByTable[table]    ?? []
       let autoIncr    = autoIncrByTable[table]
@@ -316,7 +317,7 @@ open class PostgreSQLModelFetch: AdaptorModelFetch {
 
   public func describeEntityWithTableName(_ table: String) throws -> Entity {
     guard let entity = try describeEntitiesWithTableNames([table]).first else {
-      throw Error.DidNotFindTable(table)
+      throw PostgreSQLModelFetchError.didNotFindTable(table)
     }
     return entity
   }

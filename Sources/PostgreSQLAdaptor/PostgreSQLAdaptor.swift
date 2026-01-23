@@ -10,14 +10,15 @@ import Foundation
 import ZeeQL
 import CLibPQ
 
+public enum PostgreSQLAdaptorError: Swift.Error {
+
+  case generic
+  case notImplemented
+  case couldNotConnect(String)
+}
+
 open class PostgreSQLAdaptor : Adaptor, SmartDescription {
-  
-  public enum Error : Swift.Error {
-    case Generic
-    case NotImplemented
-    case CouldNotConnect(String)
-  }
-  
+
   /// The connectString the adaptor was configured with.
   open var connectString : String
 
@@ -141,10 +142,10 @@ open class PostgreSQLAdaptor : Adaptor, SmartDescription {
     guard let handle = PQconnectdb(connectString) else {
       if let cstr = PQerrorMessage(nil) { // TBD
         throw AdaptorError.couldNotOpenChannel(
-                             Error.CouldNotConnect(String(cString: cstr)))
+                             PostgreSQLAdaptorError.couldNotConnect(String(cString: cstr)))
       }
       throw AdaptorError.couldNotOpenChannel(
-                             Error.CouldNotConnect("Got no handle?"))
+                             PostgreSQLAdaptorError.couldNotConnect("Got no handle?"))
     }
     
     guard PQstatus(handle) == CONNECTION_OK else {
@@ -152,7 +153,7 @@ open class PostgreSQLAdaptor : Adaptor, SmartDescription {
       if let cstr = PQerrorMessage(handle) { reason = String(cString: cstr) }
       else { reason = "Not connected, no specific error." }
       PQfinish(handle)
-      throw AdaptorError.couldNotOpenChannel(Error.CouldNotConnect(reason))
+      throw AdaptorError.couldNotOpenChannel(PostgreSQLAdaptorError.couldNotConnect(reason))
     }
     
     return PostgreSQLAdaptorChannel(adaptor: self, handle: handle)
