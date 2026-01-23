@@ -3,21 +3,22 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/17.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 import Foundation
 import ZeeQL
 import CLibPQ
 
+public enum PostgreSQLAdaptorError: Swift.Error {
+
+  case generic
+  case notImplemented
+  case couldNotConnect(String)
+}
+
 open class PostgreSQLAdaptor : Adaptor, SmartDescription {
-  
-  public enum Error : Swift.Error {
-    case Generic
-    case NotImplemented
-    case CouldNotConnect(String)
-  }
-  
+
   /// The connectString the adaptor was configured with.
   open var connectString : String
 
@@ -140,11 +141,11 @@ open class PostgreSQLAdaptor : Adaptor, SmartDescription {
   open func openChannel() throws -> AdaptorChannel {
     guard let handle = PQconnectdb(connectString) else {
       if let cstr = PQerrorMessage(nil) { // TBD
-        throw AdaptorError.CouldNotOpenChannel(
-                             Error.CouldNotConnect(String(cString: cstr)))
+        throw AdaptorError.couldNotOpenChannel(
+                             PostgreSQLAdaptorError.couldNotConnect(String(cString: cstr)))
       }
-      throw AdaptorError.CouldNotOpenChannel(
-                             Error.CouldNotConnect("Got no handle?"))
+      throw AdaptorError.couldNotOpenChannel(
+                             PostgreSQLAdaptorError.couldNotConnect("Got no handle?"))
     }
     
     guard PQstatus(handle) == CONNECTION_OK else {
@@ -152,7 +153,7 @@ open class PostgreSQLAdaptor : Adaptor, SmartDescription {
       if let cstr = PQerrorMessage(handle) { reason = String(cString: cstr) }
       else { reason = "Not connected, no specific error." }
       PQfinish(handle)
-      throw AdaptorError.CouldNotOpenChannel(Error.CouldNotConnect(reason))
+      throw AdaptorError.couldNotOpenChannel(PostgreSQLAdaptorError.couldNotConnect(reason))
     }
     
     return PostgreSQLAdaptorChannel(adaptor: self, handle: handle)
