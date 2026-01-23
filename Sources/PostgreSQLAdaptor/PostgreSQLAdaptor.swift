@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/17.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 import Foundation
@@ -140,10 +140,10 @@ open class PostgreSQLAdaptor : Adaptor, SmartDescription {
   open func openChannel() throws -> AdaptorChannel {
     guard let handle = PQconnectdb(connectString) else {
       if let cstr = PQerrorMessage(nil) { // TBD
-        throw AdaptorError.CouldNotOpenChannel(
+        throw AdaptorError.couldNotOpenChannel(
                              Error.CouldNotConnect(String(cString: cstr)))
       }
-      throw AdaptorError.CouldNotOpenChannel(
+      throw AdaptorError.couldNotOpenChannel(
                              Error.CouldNotConnect("Got no handle?"))
     }
     
@@ -152,7 +152,7 @@ open class PostgreSQLAdaptor : Adaptor, SmartDescription {
       if let cstr = PQerrorMessage(handle) { reason = String(cString: cstr) }
       else { reason = "Not connected, no specific error." }
       PQfinish(handle)
-      throw AdaptorError.CouldNotOpenChannel(Error.CouldNotConnect(reason))
+      throw AdaptorError.couldNotOpenChannel(Error.CouldNotConnect(reason))
     }
     
     return PostgreSQLAdaptorChannel(adaptor: self, handle: handle)

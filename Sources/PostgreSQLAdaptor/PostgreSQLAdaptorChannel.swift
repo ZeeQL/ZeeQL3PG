@@ -3,7 +3,7 @@
 //  ZeeQL
 //
 //  Created by Helge Hess on 03/03/17.
-//  Copyright © 2017-2025 ZeeZide GmbH. All rights reserved.
+//  Copyright © 2017-2026 ZeeZide GmbH. All rights reserved.
 //
 
 #if os(Windows)
@@ -443,7 +443,7 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
   @inlinable
   public func begin() throws {
     guard !isTransactionInProgress
-     else { throw AdaptorChannelError.TransactionInProgress }
+     else { throw AdaptorChannelError.transactionInProgress }
     
     try performSQL("BEGIN TRANSACTION;")
     isTransactionInProgress = true
@@ -532,13 +532,13 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
     var rec : AdaptorRecord? = nil
     try evaluateQueryExpression(expr, attributes) { record in
       guard rec == nil else { // multiple matched!
-        throw AdaptorError.FailedToRefetchInsertedRow(
+        throw AdaptorError.failedToRefetchInsertedRow(
                              entity: entity, row: row)
       }
       rec = record
     }
     guard let rrec = rec else { // no record returned?
-      throw AdaptorError.FailedToRefetchInsertedRow(entity: entity, row: row)
+      throw AdaptorError.failedToRefetchInsertedRow(entity: entity, row: row)
     }
     
     return rrec.asAdaptorRow

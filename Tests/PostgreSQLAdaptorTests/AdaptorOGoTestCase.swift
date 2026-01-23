@@ -261,7 +261,7 @@ class AdaptorOGoTestCase: XCTestCase {
     
     class OGoObject : ActiveRecord {
       // TODO: actuall add KVC to store the key in this var
-      var id : Int { return value(forKey: "id") as! Int }
+      var id : Int { return valueForKey("id") as! Int }
     }
     class OGoCodeEntity<T: OGoObject> : CodeEntity<T> {
       // add common attributes, and support them in reflection
@@ -329,7 +329,7 @@ class AdaptorOGoTestCase: XCTestCase {
 
     class OGoObject : ActiveRecord {
       // TODO: actuall add KVC to store the key in this var
-      var id : Int { return value(forKey: "id") as! Int }
+      var id : Int { return valueForKey("id") as! Int }
     }
     class OGoCodeEntity<T: OGoObject> : CodeEntity<T> {
       // add common attributes, and support them in reflection
@@ -409,7 +409,7 @@ class AdaptorOGoTestCase: XCTestCase {
 
     class OGoObject : ActiveRecord {
       // TODO: actually add KVC to store the key in this var
-      var id : Int { return value(forKey: "id") as! Int }
+      var id : Int { return valueForKey("id") as! Int }
     }
     class OGoCodeEntity<T: OGoObject> : CodeEntity<T> {
       // add common attributes, and support them in reflection
@@ -465,7 +465,7 @@ class AdaptorOGoTestCase: XCTestCase {
       static let entity : ZeeQL.Entity = Entity()
       
       var addresses : [ Address ] { // TBD: Careful, does it conflict with KVC?
-        return storedValue(forKey: "addresses") as? [ Address ] ?? []
+        return storedValueForKey("addresses") as? [ Address ] ?? []
       }
     }
     do {
@@ -504,7 +504,7 @@ class AdaptorOGoTestCase: XCTestCase {
 
     class OGoObject : ActiveRecord {
       // TODO: actually add KVC to store the key in this var
-      var id : Int { return value(forKey: "id") as! Int }
+      var id : Int { return valueForKey("id") as! Int }
     }
     class OGoCodeEntity<T: OGoObject> : CodeEntity<T> {
       // add common attributes, and support them in reflection
@@ -562,7 +562,7 @@ class AdaptorOGoTestCase: XCTestCase {
       static let entity : ZeeQL.Entity = fields
       
       var addresses : [ Address ] { // TBD: Careful, does it conflict with KVC?
-        return storedValue(forKey: "addresses") as? [ Address ] ?? []
+        return storedValueForKey("addresses") as? [ Address ] ?? []
       }
     }
     do {
