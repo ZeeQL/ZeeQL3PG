@@ -560,11 +560,13 @@ fileprivate func tdup<T>(_ value: T) -> UnsafeBufferPointer<Int8> {
   return UnsafeBufferPointer(start: UnsafePointer(raw), count: len)
 }
 
+#if canImport(Foundation)
 fileprivate extension Date {
   
   // 2000-01-01
   static let pgReferenceDate = Date(timeIntervalSince1970: 946684800)
 }
+#endif
 
 
 // MARK: - Binding
@@ -632,6 +634,7 @@ extension UInt  : PGBindableValue {}
 extension Int32 : PGBindableValue {}
 extension Int64 : PGBindableValue {}
 
+#if canImport(Foundation)
 extension Date: PGBindableValue {
   
   fileprivate func bind(index idx: Int, log: Bool) throws -> Bind {
@@ -649,6 +652,7 @@ extension UUID: PGBindableValue {
     return try uuidString.bind(index: idx, log: log)
   }
 }
+#endif
 
 extension KeyGlobalID: PGBindableValue {
   
