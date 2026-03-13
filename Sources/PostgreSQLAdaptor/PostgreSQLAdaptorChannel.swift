@@ -634,6 +634,20 @@ extension UInt  : PGBindableValue {}
 extension Int32 : PGBindableValue {}
 extension Int64 : PGBindableValue {}
 
+extension BinaryFloatingPoint {
+
+  fileprivate func bind(index idx: Int, log: Bool) throws -> Bind {
+    if log { print("      [\(idx)]> bind float \(self)") }
+    let value = Double(self)
+    let bp    = tdup(value.bitPattern.bigEndian)
+    return Bind(type: OIDs.FLOAT8,
+                length: Int32(bp.count),
+                rawValue: bp.baseAddress!)
+  }
+}
+extension Double : PGBindableValue {}
+extension Float  : PGBindableValue {}
+
 #if canImport(Foundation)
 extension Date: PGBindableValue {
   
