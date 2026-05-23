@@ -26,7 +26,7 @@ class PostgreSQLExpressionTests: XCTestCase {
   
   
   func testRawDeleteSQLExpr() {
-    let q = qualifierWith(format: "id = 5")
+    let q = qualifierWithFormat("id = 5")
     XCTAssertNotNil(q, "could not parse qualifier")
     
     let expr = factory.deleteStatementWithQualifier(q!, entity)
@@ -36,7 +36,7 @@ class PostgreSQLExpressionTests: XCTestCase {
   }
   
   func testUpdateSQLExpr() {
-    let q = qualifierWith(format: "id = 5")
+    let q = qualifierWithFormat("id = 5")
     XCTAssertNotNil(q, "could not parse qualifier")
     
     let row : [ String : Any? ] = [ "age": 42, "name": "Zealandia" ]
@@ -67,7 +67,7 @@ class PostgreSQLExpressionTests: XCTestCase {
   }
   
   func testSimpleSelectExpr() {
-    let q = qualifierWith(format: "age > 13")
+    let q = qualifierWithFormat("age > 13")
     XCTAssertNotNil(q, "could not parse qualifier")
     
     let fs = ModelFetchSpecification(entity: entity, qualifier: q)
@@ -82,7 +82,7 @@ class PostgreSQLExpressionTests: XCTestCase {
   }
   
   func testSimpleSelectExprWithArgument() {
-    let q = qualifierWith(format: "name = %@", "Donald")
+    let q = qualifierWithFormat("name = %@", "Donald")
     XCTAssertNotNil(q, "could not parse qualifier")
     
     let fs = ModelFetchSpecification(entity: entity, qualifier: q)
