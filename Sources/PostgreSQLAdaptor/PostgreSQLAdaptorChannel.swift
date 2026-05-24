@@ -55,7 +55,16 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
     PQfinish(handle)
     self.handle = nil
   }
-  
+
+  /// The backend process ID of this channel's PG connection, or 0 if the
+  /// channel has been closed (PQbackendPID).
+  @inlinable
+  public var backendProcessID : Int32 {
+    guard let handle = handle else { return 0 }
+    return PQbackendPID(handle)
+  }
+
+
   
   // MARK: - Raw Queries
   
