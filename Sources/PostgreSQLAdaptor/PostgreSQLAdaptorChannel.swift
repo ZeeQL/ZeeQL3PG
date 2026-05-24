@@ -26,8 +26,6 @@ public enum PostgreSQLAdaptorChannelError: Swift.Error {
   case fatalError (reason: String, sql: String)
   case unsupportedResultType(String)
 
-  case generic
-  case notImplemented
   case connectionClosed
 }
 
