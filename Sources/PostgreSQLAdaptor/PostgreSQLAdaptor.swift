@@ -10,11 +10,13 @@ import Foundation
 import ZeeQL
 import CLibPQ
 
-public enum PostgreSQLAdaptorError: Swift.Error {
+public enum PostgreSQLAdaptorError: Swift.Error, Sendable {
 
-  case generic
-  case notImplemented
   case couldNotConnect(String)
+
+  case listenFailed    (channel: String, reason: String)
+  case unlistenFailed  (channel: String, reason: String)
+  case notificationCenterClosed
 }
 
 open class PostgreSQLAdaptor : Adaptor, SmartDescription {

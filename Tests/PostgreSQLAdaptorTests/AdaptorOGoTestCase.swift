@@ -33,7 +33,7 @@ class AdaptorOGoTestCase: XCTestCase {
   
   struct Qualifiers {
     static let templateUser =
-      qualifierWith(format: "login = %@ AND id = %i", "template",9999)
+      qualifierWithFormat("login = %@ AND id = %i", "template",9999)
   }
   
   

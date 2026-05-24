@@ -26,8 +26,6 @@ public enum PostgreSQLAdaptorChannelError: Swift.Error {
   case fatalError (reason: String, sql: String)
   case unsupportedResultType(String)
 
-  case generic
-  case notImplemented
   case connectionClosed
 }
 
@@ -55,7 +53,16 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
     PQfinish(handle)
     self.handle = nil
   }
-  
+
+  /// The backend process ID of this channel's PG connection, or 0 if the
+  /// channel has been closed (PQbackendPID).
+  @inlinable
+  public var backendProcessID : Int32 {
+    guard let handle = handle else { return 0 }
+    return PQbackendPID(handle)
+  }
+
+
   
   // MARK: - Raw Queries
   
@@ -243,16 +250,16 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
     
     // types, values, length, binaryOrNot
     
-    // PGresult
-    guard let result = PQexecParams(handle, sql,
-                                    Int32(bindingCount),
-                                    bindingTypes,
-                                    bindingValues,
-                                    bindingLengths,
-                                    bindingIsBinary, BinaryFlag)
-     else {
-      throw PostgreSQLAdaptorChannelError.execError(reason: lastError ?? defaultReason,
-                            sql: sql)
+    // PQexec for no bindings, can do multiple statements. PQexecParams w/
+    // bindings, requires a single statement as input.
+    guard let result = bindingCount == 0
+      ? PQexec(handle, sql)
+      : PQexecParams(handle, sql, Int32(bindingCount),
+                     bindingTypes, bindingValues, bindingLengths,
+                     bindingIsBinary, BinaryFlag) else
+    {
+      throw PostgreSQLAdaptorChannelError
+        .execError(reason: lastError ?? defaultReason, sql: sql)
     }
     defer { PQclear(result) }
     

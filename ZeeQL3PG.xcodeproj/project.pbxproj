@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E80CE01F1EA1811E00347D7B /* libZeeQL.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E80CE01E1EA1811E00347D7B /* libZeeQL.dylib */; };
 		E80CE0221EA1871900347D7B /* PostgreSQLModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80CE0211EA1871900347D7B /* PostgreSQLModelTests.swift */; };
 		E80CE0241EA1897400347D7B /* PostgreSQLModelFetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80CE0231EA1897400347D7B /* PostgreSQLModelFetch.swift */; };
 		E84D18042E97F46A00038603 /* ZeeQL in Frameworks */ = {isa = PBXBuildFile; productRef = E84D18032E97F46A00038603 /* ZeeQL */; };
@@ -15,6 +14,7 @@
 		E870FC391E9BA1E800A038AF /* PostgreSQLAdaptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E870FC361E9BA1E800A038AF /* PostgreSQLAdaptor.swift */; };
 		E870FC3A1E9BA1E800A038AF /* PostgreSQLAdaptorChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E870FC371E9BA1E800A038AF /* PostgreSQLAdaptorChannel.swift */; };
 		E870FC3B1E9BA1E800A038AF /* PostgreSQLExpression.swift in Sources */ = {isa = PBXBuildFile; fileRef = E870FC381E9BA1E800A038AF /* PostgreSQLExpression.swift */; };
+		E8AB12352605210000A038AF /* PGNotificationCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AB12342605210000A038AF /* PGNotificationCenter.swift */; };
 		E870FC411E9BA1F700A038AF /* AdaptorOGoTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = E870FC3D1E9BA1F700A038AF /* AdaptorOGoTestCase.swift */; };
 		E870FC431E9BA1F700A038AF /* PostgreSQLAdaptorOGoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E870FC3F1E9BA1F700A038AF /* PostgreSQLAdaptorOGoTests.swift */; };
 		E870FC441E9BA1F700A038AF /* PostgreSQLSQLExpressionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E870FC401E9BA1F700A038AF /* PostgreSQLSQLExpressionTests.swift */; };
@@ -23,7 +23,9 @@
 		E8A8350A1ECDCF6D00CCDD82 /* ContactsDBModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A835081ECDCF6D00CCDD82 /* ContactsDBModel.swift */; };
 		E8A8350B1ECDCF6D00CCDD82 /* PostgreSQLActiveRecordTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A835091ECDCF6D00CCDD82 /* PostgreSQLActiveRecordTests.swift */; };
 		E8BD32742305B2B3000EA627 /* PGTestRentalsDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8BD32732305B2B3000EA627 /* PGTestRentalsDB.swift */; };
-		E8D95FC91E91A7AD0072FF09 /* libZeeQL.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E8D95FC81E91A7AD0072FF09 /* libZeeQL.dylib */; };
+		E8AB22350000000000A038AF /* PGNotificationCenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AB22340000000000A038AF /* PGNotificationCenterTests.swift */; };
+		E8AB22370000000000A038AF /* PostgreSQLAdaptor+TestMake.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AB22360000000000A038AF /* PostgreSQLAdaptor+TestMake.swift */; };
+		E8AB22390000000000A038AF /* PGTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AB22380000000000A038AF /* PGTestCase.swift */; };
 		E8DDEE2C1E5FA12C00EC1DD8 /* libPostgreSQLAdaptor.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E8EB94CD1E5F32360058D8D1 /* libPostgreSQLAdaptor.dylib */; };
 /* End PBXBuildFile section */
 
@@ -39,7 +41,6 @@
 
 /* Begin PBXFileReference section */
 		E808F4401E926BD100022CE9 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
-		E80CE01E1EA1811E00347D7B /* libZeeQL.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libZeeQL.dylib; path = "../../../../../../private/tmp/DerivedData/Samples-cojpcxfuvlchxdgxljebsbkvpqxf/Build/Products/Debug/libZeeQL.dylib"; sourceTree = "<group>"; };
 		E80CE0201EA181F000347D7B /* SwiftShared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = SwiftShared.xcconfig; path = xcconfig/SwiftShared.xcconfig; sourceTree = "<group>"; };
 		E80CE0211EA1871900347D7B /* PostgreSQLModelTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PostgreSQLModelTests.swift; sourceTree = "<group>"; };
 		E80CE0231EA1897400347D7B /* PostgreSQLModelFetch.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PostgreSQLModelFetch.swift; path = PostgreSQLAdaptor/PostgreSQLModelFetch.swift; sourceTree = "<group>"; };
@@ -47,6 +48,7 @@
 		E870FC361E9BA1E800A038AF /* PostgreSQLAdaptor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PostgreSQLAdaptor.swift; path = PostgreSQLAdaptor/PostgreSQLAdaptor.swift; sourceTree = "<group>"; };
 		E870FC371E9BA1E800A038AF /* PostgreSQLAdaptorChannel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PostgreSQLAdaptorChannel.swift; path = PostgreSQLAdaptor/PostgreSQLAdaptorChannel.swift; sourceTree = "<group>"; };
 		E870FC381E9BA1E800A038AF /* PostgreSQLExpression.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PostgreSQLExpression.swift; path = PostgreSQLAdaptor/PostgreSQLExpression.swift; sourceTree = "<group>"; };
+		E8AB12342605210000A038AF /* PGNotificationCenter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PGNotificationCenter.swift; path = PostgreSQLAdaptor/PGNotificationCenter.swift; sourceTree = "<group>"; };
 		E870FC3D1E9BA1F700A038AF /* AdaptorOGoTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AdaptorOGoTestCase.swift; sourceTree = "<group>"; };
 		E870FC3E1E9BA1F700A038AF /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E870FC3F1E9BA1F700A038AF /* PostgreSQLAdaptorOGoTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PostgreSQLAdaptorOGoTests.swift; sourceTree = "<group>"; };
@@ -58,9 +60,11 @@
 		E8A835081ECDCF6D00CCDD82 /* ContactsDBModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactsDBModel.swift; sourceTree = "<group>"; };
 		E8A835091ECDCF6D00CCDD82 /* PostgreSQLActiveRecordTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PostgreSQLActiveRecordTests.swift; sourceTree = "<group>"; };
 		E8BD32732305B2B3000EA627 /* PGTestRentalsDB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PGTestRentalsDB.swift; sourceTree = "<group>"; };
+		E8AB22340000000000A038AF /* PGNotificationCenterTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PGNotificationCenterTests.swift; sourceTree = "<group>"; };
+		E8AB22360000000000A038AF /* PostgreSQLAdaptor+TestMake.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "PostgreSQLAdaptor+TestMake.swift"; path = "Utilities/PostgreSQLAdaptor+TestMake.swift"; sourceTree = "<group>"; };
+		E8AB22380000000000A038AF /* PGTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PGTestCase.swift; path = Utilities/PGTestCase.swift; sourceTree = "<group>"; };
 		E8CF06451E645B68008E5847 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		E8D279721E5505DE00453BBE /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Base.xcconfig; path = xcconfig/Base.xcconfig; sourceTree = "<group>"; };
-		E8D95FC81E91A7AD0072FF09 /* libZeeQL.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libZeeQL.dylib; path = ../ZeeQL/build/Debug/libZeeQL.dylib; sourceTree = "<group>"; };
 		E8DDEE271E5FA12C00EC1DD8 /* PostgreSQLAdaptorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PostgreSQLAdaptorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E8EB94CD1E5F32360058D8D1 /* libPostgreSQLAdaptor.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libPostgreSQLAdaptor.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -70,7 +74,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E80CE01F1EA1811E00347D7B /* libZeeQL.dylib in Frameworks */,
 				E8DDEE2C1E5FA12C00EC1DD8 /* libPostgreSQLAdaptor.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -81,7 +84,6 @@
 			files = (
 				E84D18042E97F46A00038603 /* ZeeQL in Frameworks */,
 				E85E927025C31FE1006CEB40 /* libpq.a in Frameworks */,
-				E8D95FC91E91A7AD0072FF09 /* libZeeQL.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -96,6 +98,7 @@
 				E870FC381E9BA1E800A038AF /* PostgreSQLExpression.swift */,
 				E870FC6A1E9BDDFC00A038AF /* PostgreSQLOIDs.swift */,
 				E80CE0231EA1897400347D7B /* PostgreSQLModelFetch.swift */,
+				E8AB12342605210000A038AF /* PGNotificationCenter.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -106,13 +109,24 @@
 				E870FC3E1E9BA1F700A038AF /* Info.plist */,
 				E8BD32732305B2B3000EA627 /* PGTestRentalsDB.swift */,
 				E8A835051ECDCF3700CCDD82 /* Generic */,
+				E8AB22300000000000A038AF /* Utilities */,
 				E870FC3F1E9BA1F700A038AF /* PostgreSQLAdaptorOGoTests.swift */,
 				E870FC401E9BA1F700A038AF /* PostgreSQLSQLExpressionTests.swift */,
 				E80CE0211EA1871900347D7B /* PostgreSQLModelTests.swift */,
 				E8A835091ECDCF6D00CCDD82 /* PostgreSQLActiveRecordTests.swift */,
 				E8A835081ECDCF6D00CCDD82 /* ContactsDBModel.swift */,
+				E8AB22340000000000A038AF /* PGNotificationCenterTests.swift */,
 			);
 			path = PostgreSQLAdaptorTests;
+			sourceTree = "<group>";
+		};
+		E8AB22300000000000A038AF /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				E8AB22360000000000A038AF /* PostgreSQLAdaptor+TestMake.swift */,
+				E8AB22380000000000A038AF /* PGTestCase.swift */,
+			);
+			name = Utilities;
 			sourceTree = "<group>";
 		};
 		E870FC611E9BB30900A038AF /* CLibPQ */ = {
@@ -185,8 +199,6 @@
 			isa = PBXGroup;
 			children = (
 				E85E926F25C31FE1006CEB40 /* libpq.a */,
-				E80CE01E1EA1811E00347D7B /* libZeeQL.dylib */,
-				E8D95FC81E91A7AD0072FF09 /* libZeeQL.dylib */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -306,6 +318,9 @@
 				E870FC411E9BA1F700A038AF /* AdaptorOGoTestCase.swift in Sources */,
 				E8BD32742305B2B3000EA627 /* PGTestRentalsDB.swift in Sources */,
 				E870FC431E9BA1F700A038AF /* PostgreSQLAdaptorOGoTests.swift in Sources */,
+				E8AB22370000000000A038AF /* PostgreSQLAdaptor+TestMake.swift in Sources */,
+				E8AB22390000000000A038AF /* PGTestCase.swift in Sources */,
+				E8AB22350000000000A038AF /* PGNotificationCenterTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -318,6 +333,7 @@
 				E870FC6B1E9BDDFC00A038AF /* PostgreSQLOIDs.swift in Sources */,
 				E870FC3A1E9BA1E800A038AF /* PostgreSQLAdaptorChannel.swift in Sources */,
 				E80CE0241EA1897400347D7B /* PostgreSQLModelFetch.swift in Sources */,
+				E8AB12352605210000A038AF /* PGNotificationCenter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -408,7 +424,7 @@
 				EXECUTABLE_PREFIX = lib;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/usr/local/opt/libpq/lib,
+					/opt/homebrew/opt/libpq/lib,
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -424,7 +440,7 @@
 				EXECUTABLE_PREFIX = lib;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/usr/local/opt/libpq/lib,
+					/opt/homebrew/opt/libpq/lib,
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

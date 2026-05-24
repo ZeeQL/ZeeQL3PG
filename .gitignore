@@ -84,3 +84,7 @@ Packages
 Package.pins
 Package.resolved
 
+.swiftpm/xcode/xcshareddata/xcschemes/ZeeQL3PG.xcscheme
+ZeeQL3PG.xcodeproj/xcshareddata/xcschemes/PostgreSQLAdaptor.xcscheme
+ZeeQL3PG.xcodeproj/xcshareddata/xcschemes/PostgreSQLAdaptor.xcscheme
+*.xcscheme
