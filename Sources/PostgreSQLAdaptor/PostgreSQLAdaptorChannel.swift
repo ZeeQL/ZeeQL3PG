@@ -71,7 +71,7 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
    */
   func fetchRows(_ res      : OpaquePointer,
                  _ optAttrs : [ Attribute ]? = nil,
-                 cb         : ( AdaptorRecord ) throws -> Void) throws
+                 yield      : ( AdaptorRecord ) throws -> Void) throws
   {
     // The libpq function fetches everything into memory I think. Need to
     // drop libpq eventually ;-)
@@ -160,25 +160,53 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
       }
       
       let record = AdaptorRecord(schema: schema, values: values)
-      try cb(record)
+      try yield(record)
     }
   }
   
   
+  /**
+   * Execute `sql` against and yield results.
+   *
+   * When `bindings` is `nil`/empty and `allowMultiStatement` is `true`,
+   * the call is routed through `PQexec`, which accepts multiple
+   * `;`-separated statements but always returns results in libpq's
+   * text format.
+   * All other calls go through `PQexecParams`, which can only do single
+   * statement but binary results.
+   *
+   * - Parameters:
+   *   - sql:                 The SQL statement(s).
+   *   - optAttrs:            Optional ``Attribute``'s describing the
+   *                          expected result columns. When provided,
+   *                          they form the schema of the ``AdaptorRecord``'s
+   *                          passed to `yield`, other names come from result
+   *                          set.
+   *   - bindings:            Parameter bindings or nil, if there are none.
+   *   - allowMultiStatement: Set to `true` to permit multiple statement SQL.
+   *                          Only safe when the caller does not need to consume
+   *                          rows. (default: false)
+   *   - yield:               Row result closure.
+   * - Returns: The number of rows affected, or nil for empty input/select.
+   * - Throws:  ``PostgreSQLAdaptorChannelError`` on connection or
+   *            execution failures, or any error raised by `yield`.
+   */
   private func _runSQL(sql: String, optAttrs : [ Attribute ]?,
                        bindings: [ SQLExpression.BindVariable ]?,
-                       cb: ( AdaptorRecord ) throws -> Void) throws
+                       allowMultiStatement: Bool = false,
+                       yield: ( AdaptorRecord ) throws -> Void) throws
                -> Int?
   {
-    guard let handle = handle else { throw PostgreSQLAdaptorChannelError.connectionClosed }
-    
+    guard let handle = handle else {
+      throw PostgreSQLAdaptorChannelError.connectionClosed
+    }
+
     let defaultReason = "Could not performSQL"
     if logSQL { print("SQL: \(sql)") }
     
     
     // bindings
-    // TODO: avoid creating the arrays, but we have other overheads here
-    
+
     let bindingCount    = bindings?.count ?? 0
     var bindingTypes    = [ Oid   ]()
     var bindingLengths  = [ Int32 ]()
@@ -196,6 +224,7 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
     
     var idx = 0
     if let bindings = bindings {
+        // TODO: avoid allocating the arrays, but we have other overheads here
       bindingTypes   .reserveCapacity(bindingCount)
       bindingLengths .reserveCapacity(bindingCount)
       bindingIsBinary.reserveCapacity(bindingCount)
@@ -249,10 +278,11 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
     }
     
     // types, values, length, binaryOrNot
-    
-    // PQexec for no bindings, can do multiple statements. PQexecParams w/
-    // bindings, requires a single statement as input.
-    guard let result = bindingCount == 0
+
+    // `PQexec` supports multiple `;`-separated statements but always
+    // returns results in TEXT format.
+    // Only `performSQL` opts into multi-statement support (discards rows).
+    guard let result = (allowMultiStatement && bindingCount == 0)
       ? PQexec(handle, sql)
       : PQexecParams(handle, sql, Int32(bindingCount),
                      bindingTypes, bindingValues, bindingLengths,
@@ -266,26 +296,33 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
     let status = PQresultStatus(result)
     switch status {
       case PGRES_TUPLES_OK:
-        try fetchRows(result, optAttrs, cb: cb)
+        try fetchRows(result, optAttrs, yield: yield)
       
       case PGRES_EMPTY_QUERY: return nil // string was empty :-)
       case PGRES_COMMAND_OK:  break      // no data
       
       case PGRES_NONFATAL_ERROR:
-        throw PostgreSQLAdaptorChannelError.execError(reason: lastError ?? defaultReason, sql: sql)
+        throw PostgreSQLAdaptorChannelError
+                .execError(reason: lastError ?? defaultReason, sql: sql)
 
       case PGRES_FATAL_ERROR:
-        throw PostgreSQLAdaptorChannelError.fatalError(reason: lastError ?? defaultReason, sql: sql)
-      
+        throw PostgreSQLAdaptorChannelError
+                .fatalError(reason: lastError ?? defaultReason, sql: sql)
+
       case PGRES_BAD_RESPONSE:
         // TBD: close connection?
-        throw PostgreSQLAdaptorChannelError.badResponse(reason: lastError ?? defaultReason, sql: sql)
-      
+        throw PostgreSQLAdaptorChannelError
+                .badResponse(reason: lastError ?? defaultReason, sql: sql)
+
       // TODO: support COPY
-      case PGRES_COPY_IN:   throw PostgreSQLAdaptorChannelError.unsupportedResultType("COPY_IN")
-      case PGRES_COPY_OUT:  throw PostgreSQLAdaptorChannelError.unsupportedResultType("COPY_OUT")
-      case PGRES_COPY_BOTH: throw PostgreSQLAdaptorChannelError.unsupportedResultType("COPY_BOTH")
-      default:              throw PostgreSQLAdaptorChannelError.unsupportedResultType("\(status)")
+      case PGRES_COPY_IN:
+        throw PostgreSQLAdaptorChannelError.unsupportedResultType("COPY_IN")
+      case PGRES_COPY_OUT:
+        throw PostgreSQLAdaptorChannelError.unsupportedResultType("COPY_OUT")
+      case PGRES_COPY_BOTH:
+        throw PostgreSQLAdaptorChannelError.unsupportedResultType("COPY_BOTH")
+      default:
+        throw PostgreSQLAdaptorChannelError.unsupportedResultType("\(status)")
     }
     
     guard let cstr = PQcmdTuples(result) else { return nil }
@@ -296,13 +333,14 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
   public func querySQL(_ sql: String, _ optAttrs : [ Attribute ]?,
                          cb: ( AdaptorRecord ) throws -> Void) throws
   {
-    _ = try _runSQL(sql: sql, optAttrs: optAttrs, bindings: nil, cb: cb)
+    _ = try _runSQL(sql: sql, optAttrs: optAttrs, bindings: nil, yield: cb)
   }
   
   @discardableResult
   public func performSQL(_ sql: String) throws -> Int {
     // Hm, funny. If we make 'cb' optional, it becomes escaping. So avoid that.
-    return try _runSQL(sql: sql, optAttrs: nil, bindings: nil) { rec in } ?? 0
+    return try _runSQL(sql: sql, optAttrs: nil, bindings: nil,
+                       allowMultiStatement: true) { rec in } ?? 0
   }
   
   
@@ -435,7 +473,7 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
                 throws
   {
     _ = try _runSQL(sql: sqlexpr.statement, optAttrs: optAttrs,
-                    bindings: sqlexpr.bindVariables, cb: result)
+                    bindings: sqlexpr.bindVariables, yield: result)
   }
 
   public func evaluateUpdateExpression(_ sqlexpr: SQLExpression) throws -> Int {
