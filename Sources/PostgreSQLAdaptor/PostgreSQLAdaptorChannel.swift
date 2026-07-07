@@ -335,6 +335,25 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
   {
     _ = try _runSQL(sql: sql, optAttrs: optAttrs, bindings: nil, yield: cb)
   }
+
+  /**
+   * Run a raw SQL query with positional bind variables. The `sql` string
+   * must use `$1`, `$2`, … placeholders (libpq positional parameters), one
+   * per entry in `bindings`, in order. Each bind value must be a
+   * `PGBindableValue` (`String`, `Int`, `Double`, `Bool`, `Date`, `UUID`,
+   * or an `Optional` of those); pass `value: nil` for a SQL NULL.
+   *
+   * Unlike ``querySQL(_:_:cb:)`` this always goes through `PQexecParams`, so
+   * the values are transmitted out-of-band and never string-interpolated
+   * into the statement.
+   */
+  public func querySQL(_ sql: String, _ optAttrs : [ Attribute ]?,
+                       bindings: [ SQLExpression.BindVariable ]?,
+                       cb: ( AdaptorRecord ) throws -> Void) throws
+  {
+    _ = try _runSQL(sql: sql, optAttrs: optAttrs, bindings: bindings,
+                    yield: cb)
+  }
   
   @discardableResult
   public func performSQL(_ sql: String) throws -> Int {
