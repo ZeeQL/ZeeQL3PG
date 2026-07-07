@@ -12,7 +12,14 @@ import XCTest
 
 class AdapterActiveRecordTests: XCTestCase {
   // Is there a better way to share test cases?
-  
+
+  override func setUpWithError() throws {
+    try super.setUpWithError()
+    try XCTSkipIf(type(of: self) == AdapterActiveRecordTests.self,
+                  "abstract base test case — run via a concrete subclass")
+    try skipUnlessReachable(adaptor, "PostgreSQL 'contacts'")
+  }
+
   open var adaptor : Adaptor! {
     XCTAssertNotNil(nil, "override in subclass")
     return nil

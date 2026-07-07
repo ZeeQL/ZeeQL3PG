@@ -20,6 +20,11 @@ class PostgreSQLModelTests: XCTestCase {
   let _adaptor = PostgreSQLAdaptor(database: "OGo2",
                                    user: "OGo", password: "OGo")
 
+  override func setUpWithError() throws {
+    try super.setUpWithError()
+    try skipUnlessReachable(adaptor, "PostgreSQL 'OGo2'")
+  }
+
   func testDescribeDatabaseNames() throws {
     let channel = try adaptor.openChannel()
     let values  = try channel.describeDatabaseNames()
