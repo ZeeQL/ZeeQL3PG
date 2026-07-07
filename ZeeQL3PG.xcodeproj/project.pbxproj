@@ -24,6 +24,7 @@
 		E8A8350B1ECDCF6D00CCDD82 /* PostgreSQLActiveRecordTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A835091ECDCF6D00CCDD82 /* PostgreSQLActiveRecordTests.swift */; };
 		E8BD32742305B2B3000EA627 /* PGTestRentalsDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8BD32732305B2B3000EA627 /* PGTestRentalsDB.swift */; };
 		E8AB22350000000000A038AF /* PGNotificationCenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AB22340000000000A038AF /* PGNotificationCenterTests.swift */; };
+		AA22DEC0DE0000000000B222 /* PostgreSQLValueDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA22DEC0DE0000000000FE02 /* PostgreSQLValueDecodingTests.swift */; };
 		E8AB22370000000000A038AF /* PostgreSQLAdaptor+TestMake.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AB22360000000000A038AF /* PostgreSQLAdaptor+TestMake.swift */; };
 		E8AB22390000000000A038AF /* PGTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AB22380000000000A038AF /* PGTestCase.swift */; };
 		E8DDEE2C1E5FA12C00EC1DD8 /* libPostgreSQLAdaptor.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E8EB94CD1E5F32360058D8D1 /* libPostgreSQLAdaptor.dylib */; };
@@ -61,6 +62,7 @@
 		E8A835091ECDCF6D00CCDD82 /* PostgreSQLActiveRecordTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PostgreSQLActiveRecordTests.swift; sourceTree = "<group>"; };
 		E8BD32732305B2B3000EA627 /* PGTestRentalsDB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PGTestRentalsDB.swift; sourceTree = "<group>"; };
 		E8AB22340000000000A038AF /* PGNotificationCenterTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PGNotificationCenterTests.swift; sourceTree = "<group>"; };
+		AA22DEC0DE0000000000FE02 /* PostgreSQLValueDecodingTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PostgreSQLValueDecodingTests.swift; sourceTree = "<group>"; };
 		E8AB22360000000000A038AF /* PostgreSQLAdaptor+TestMake.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "PostgreSQLAdaptor+TestMake.swift"; path = "Utilities/PostgreSQLAdaptor+TestMake.swift"; sourceTree = "<group>"; };
 		E8AB22380000000000A038AF /* PGTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PGTestCase.swift; path = Utilities/PGTestCase.swift; sourceTree = "<group>"; };
 		E8CF06451E645B68008E5847 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -116,6 +118,7 @@
 				E8A835091ECDCF6D00CCDD82 /* PostgreSQLActiveRecordTests.swift */,
 				E8A835081ECDCF6D00CCDD82 /* ContactsDBModel.swift */,
 				E8AB22340000000000A038AF /* PGNotificationCenterTests.swift */,
+				AA22DEC0DE0000000000FE02 /* PostgreSQLValueDecodingTests.swift */,
 			);
 			path = PostgreSQLAdaptorTests;
 			sourceTree = "<group>";
@@ -321,6 +324,7 @@
 				E8AB22370000000000A038AF /* PostgreSQLAdaptor+TestMake.swift in Sources */,
 				E8AB22390000000000A038AF /* PGTestCase.swift in Sources */,
 				E8AB22350000000000A038AF /* PGNotificationCenterTests.swift in Sources */,
+				AA22DEC0DE0000000000B222 /* PostgreSQLValueDecodingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -365,10 +365,17 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
         guard let addr = value.baseAddress else { return nil }
         return Int64(bigEndian: cast(addr))
       
-      // Float has no bigEndian
-      //  case OIDs.FLOAT4:  return Float32(bigEndian: cast(value.baseAddress!))
-      //  case OIDs.FLOAT8:  return Float64(bigEndian: cast(value.baseAddress!))
-      
+      // `Float` has no `bigEndian`, so we swap the raw bit pattern (an
+      // integer of the same width) and reinterpret. This mirrors the bind
+      // side (`BinaryFloatingPoint.bind`), which writes
+      // `value.bitPattern.bigEndian`.
+      case OIDs.FLOAT4:
+        guard let addr = value.baseAddress else { return nil }
+        return Float32(bitPattern: UInt32(bigEndian: cast(addr)))
+      case OIDs.FLOAT8:
+        guard let addr = value.baseAddress else { return nil }
+        return Float64(bitPattern: UInt64(bigEndian: cast(addr)))
+
       case OIDs.BOOL:    return (value.baseAddress!.pointee != 0)
       
       case OIDs.VARCHAR, OIDs.TEXT, OIDs.CHAR:
@@ -401,6 +408,14 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
         guard let addr = value.baseAddress else { return nil }
         return String(cString: addr)
       case OIDs.TIMESTAMP:
+        // Same 8-byte microseconds-since-2000 layout as TIMESTAMPTZ, just
+        // without an attached zone. We interpret it as UTC and return a
+        // `Date` (was: mis-read as a `String` in binary mode => garbage).
+        if value.count == 8 {
+          let msecs = Double(Int64(bigEndian: cast(value.baseAddress!)))
+          return Date(timeInterval: TimeInterval(msecs) / 1000000.0,
+                      since: Date.pgReferenceDate)
+        }
         guard let addr = value.baseAddress else { return nil }
         return String(cString: addr)
 
@@ -412,6 +427,30 @@ open class PostgreSQLAdaptorChannel : AdaptorChannel, SmartDescription {
         
       case OIDs.ARRAY_OF_TEXT:
         return decodeTextArray(from: UnsafeRawBufferPointer(value))
+
+      case OIDs.JSONB:
+        // Binary `jsonb` is a 1-byte version header (currently `0x01`)
+        // followed by the UTF-8 JSON text. We strip the header and return
+        // the JSON as `Data`, which is what `JSONDecoder` /
+        // `JSONSerialization` consume directly.
+        guard let addr = value.baseAddress, value.count >= 1 else { return nil }
+        return Data(bytes: addr + 1, count: value.count - 1)
+      case OIDs.JSON:
+        // Binary `json` is just the UTF-8 text, no version header.
+        guard let addr = value.baseAddress else { return nil }
+        return Data(bytes: addr, count: value.count)
+
+      case OIDs.UUID:
+        // 16 raw bytes in network order, which is exactly `uuid_t`.
+        guard let addr = value.baseAddress, value.count == 16 else { return nil }
+        var bytes = uuid_t(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        withUnsafeMutableBytes(of: &bytes) {
+          $0.copyBytes(from: UnsafeRawBufferPointer(start: addr, count: 16))
+        }
+        return UUID(uuid: bytes)
+
+      case OIDs.NUMERIC:
+        return decodeNumeric(from: UnsafeRawBufferPointer(value))
 
       default:
         print("Unexpected OID: \(type): \(String(cString:value.baseAddress!))")
@@ -808,4 +847,60 @@ fileprivate func decodeTextArray(from buffer: UnsafeRawBufferPointer) -> Any? {
       return result
     }
   }
+}
+
+/**
+ * Decode a PostgreSQL `numeric` from its binary wire format into a Foundation
+ * `Decimal`. `Decimal` is the right target: like `numeric` it is base-10 and
+ * exact, unlike `Double`.
+ *
+ * Wire format (`numeric_send`):
+ * - Int16  ndigits   number of base-10000 digit groups
+ * - Int16  weight    base-10000 weight of the first group
+ * - UInt16 sign      0x0000 pos, 0x4000 neg, 0xC000 NaN, 0xD000/0xF000 Inf
+ * - Int16  dscale    display scale (digits after the point; value-neutral)
+ * - Int16  digits[ndigits]  each in 0...9999
+ *
+ * Returns `nil` for `NaN`/`±Infinity` (not representable as a finite
+ * `Decimal`) rather than fabricating a wrong number.
+ */
+fileprivate func decodeNumeric(from buffer: UnsafeRawBufferPointer) -> Any? {
+  // PostgreSQL `numeric` sign words (see `numeric.h`).
+  let numericSignNeg  : UInt16 = 0x4000
+  let numericSignNaN  : UInt16 = 0xC000
+  let numericSignPInf : UInt16 = 0xD000
+  let numericSignNInf : UInt16 = 0xF000
+
+  guard let base = buffer.baseAddress, buffer.count >= 8 else { return nil }
+  var offset = 0
+
+  func readInt16() -> Int16 {
+    defer { offset += MemoryLayout<Int16>.size }
+    return base.loadUnaligned(fromByteOffset: offset, as: Int16.self).bigEndian
+  }
+
+  let ndigits = Int(readInt16())
+  let weight  = Int(readInt16())
+  let sign    = UInt16(bitPattern: readInt16())
+  _ = readInt16() // dscale, only affects display, not the value
+
+  switch sign {
+    case numericSignNaN, numericSignPInf, numericSignNInf: return nil
+    default: break
+  }
+  guard ndigits >= 0,
+        buffer.count >= (8 + ndigits * MemoryLayout<Int16>.size) else
+  {
+    return nil
+  }
+
+  var result = Decimal(0)
+  for i in 0..<ndigits {
+    let group = Int(readInt16()) // 0...9999
+    // group * 10000^(weight - i) == group * 10^(4 * (weight - i))
+    result += Decimal(sign: .plus, exponent: 4 * (weight - i),
+                      significand: Decimal(group))
+  }
+  if sign == numericSignNeg { result.negate() }
+  return result
 }
