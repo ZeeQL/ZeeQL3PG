@@ -12,6 +12,13 @@ import XCTest
 class AdaptorOGoTestCase: XCTestCase {
   // Is there a better way to share test cases?
   
+  override func setUpWithError() throws {
+    try super.setUpWithError()
+    try XCTSkipIf(type(of: self) == AdaptorOGoTestCase.self,
+                  "abstract base test case — run via a concrete subclass")
+    try skipUnlessReachable(adaptor, "PostgreSQL 'OGo2'")
+  }
+
   var adaptor : Adaptor! {
     XCTAssertNotNil(nil, "override in subclass")
     return nil

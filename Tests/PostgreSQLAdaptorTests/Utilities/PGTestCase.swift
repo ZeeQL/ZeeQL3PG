@@ -11,6 +11,7 @@
 //
 
 import XCTest
+import ZeeQL
 @testable import PostgreSQLAdaptor
 
 class PGTestCase: XCTestCase {
@@ -43,4 +44,26 @@ class PGTestCase: XCTestCase {
 
   private static let skipMessage =
     "No PostgreSQL reachable — set PGHOST/PGPORT/PGDATABASE/PGUSER/PGPASSWORD."
+}
+
+extension XCTestCase {
+
+  /**
+   * Skip the running test when `adaptor`'s database can't be opened.
+   *
+   * Lets the DB-backed integration tests (which target specific databases
+   * like `contacts` / `OGo2` / `dvdrental`) skip gracefully where those DBs
+   * are absent, instead of hard-failing.
+   */
+  func skipUnlessReachable(_ adaptor: Adaptor,
+                           _ label: String = "PostgreSQL") throws
+  {
+    do {
+      let channel = try adaptor.openChannel()
+      adaptor.releaseChannel(channel)
+    }
+    catch {
+      throw XCTSkip("\(label) unreachable — skipping: \(error)")
+    }
+  }
 }

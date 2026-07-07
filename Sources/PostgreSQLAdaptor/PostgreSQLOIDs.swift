@@ -60,5 +60,8 @@ enum OIDs {
   static let VARBIT        : Oid = 1562
   static let NUMERIC       : Oid = 1700
   static let REFCURSOR     : Oid = 1790
+  static let UUID          : Oid = 2950
+  static let JSON          : Oid = 114
+  static let JSONB         : Oid = 3802
 }
 

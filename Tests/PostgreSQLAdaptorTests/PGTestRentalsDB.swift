@@ -26,6 +26,11 @@ class PGTestRentalsDB: XCTestCase {
 
   let _adaptor = PostgreSQLAdaptor(database: "dvdrental")
 
+  override func setUpWithError() throws {
+    try super.setUpWithError()
+    try skipUnlessReachable(adaptor, "PostgreSQL 'dvdrental'")
+  }
+
   func testConnect() throws {
     let channel = try adaptor.openChannel()
     let results = try channel.querySQL("SELECT * FROM actor;")
